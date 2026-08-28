@@ -1,0 +1,58 @@
+import { jsonWithCors, corsPreflight } from "@/lib/api-cors.server";
+import { getStaffSession } from "@/lib/staff-session.server";
+import { canManageCatalog } from "@/lib/roles.shared";
+import {
+  createCatalogProduct,
+  listActiveProducts,
+} from "@/lib/products.server";
+import {
+  isProductCreateBody,
+  parsePriceToCents,
+} from "@/lib/products.shared";
+import type { ApiErrorBody, ProductPublic } from "@/lib/auth.shared";
+
+export function OPTIONS() {
+  return corsPreflight();
+}
+
+export async function GET() {
+  const products = await listActiveProducts();
+  return jsonWithCors({ products } satisfies { products: ProductPublic[] });
+}
+
+export async function POST(request: Request) {
+  const session = await getStaffSession();
+  if (!session) {
+    return Response.json(
+      { error: "Нужно войти как сотрудник" } satisfies ApiErrorBody,
+      { status: 401 },
+    );
+  }
+  if (!canManageCatalog(session.role)) {
+    return Response.json(
+      { error: "Недостаточно прав для ассортимента" } satisfies ApiErrorBody,
+      { status: 403 },
+    );
+  }
+
+  const json: unknown = await request.json().catch(() => null);
+  if (!isProductCreateBody(json)) {
+    return Response.json(
+      { error: "Укажите название и цену" } satisfies ApiErrorBody,
+      { status: 400 },
+    );
+  }
+
+  const name = json.name.trim();
+  const description = json.description.trim();
+  const priceCents = parsePriceToCents(json.priceRubles);
+  if (!name || priceCents === null) {
+    return Response.json(
+      { error: "Название обязательно, цена — число больше 0" } satisfies ApiErrorBody,
+      { status: 400 },
+    );
+  }
+
+  const product = await createCatalogProduct({ name, description, priceCents });
+  return Response.json({ product }, { status: 201 });
+}
