@@ -12,6 +12,15 @@ export const ACCOUNTING_ROLES: readonly StaffRole[] = ["OWNER", "ACCOUNTANT"];
 export const WAREHOUSE_ROLES: readonly StaffRole[] = ["OWNER", "WAREHOUSE"];
 export const SUPPORT_ROLES: readonly StaffRole[] = ["OWNER", "SUPPORT"];
 export const CATALOG_ROLES: readonly StaffRole[] = ["OWNER"];
+export const STAFF_MANAGEMENT_ROLES: readonly StaffRole[] = ["OWNER"];
+
+export const ASSIGNABLE_STAFF_ROLES = [
+  "WAREHOUSE",
+  "ACCOUNTANT",
+  "SUPPORT",
+] as const;
+
+export type AssignableStaffRole = (typeof ASSIGNABLE_STAFF_ROLES)[number];
 
 export function canAccessAnalytics(role: StaffRole): boolean {
   return ANALYTICS_ROLES.includes(role);
@@ -31,4 +40,25 @@ export function canAccessSupport(role: StaffRole): boolean {
 
 export function canManageCatalog(role: StaffRole): boolean {
   return CATALOG_ROLES.includes(role);
+}
+
+export function canManageStaff(role: StaffRole): boolean {
+  return STAFF_MANAGEMENT_ROLES.includes(role);
+}
+
+export function isAssignableStaffRole(value: string): value is AssignableStaffRole {
+  return (ASSIGNABLE_STAFF_ROLES as readonly string[]).includes(value);
+}
+
+export function staffRoleLabel(role: StaffRole): string {
+  switch (role) {
+    case "OWNER":
+      return "Владелец";
+    case "WAREHOUSE":
+      return "Склад";
+    case "ACCOUNTANT":
+      return "Бухгалтер";
+    case "SUPPORT":
+      return "Поддержка";
+  }
 }

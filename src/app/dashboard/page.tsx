@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getStaffSession } from "@/lib/staff-session.server";
-import { canManageCatalog } from "@/lib/roles.shared";
+import { canAccessSupport, canAccessWarehouse, canManageCatalog, canManageStaff } from "@/lib/roles.shared";
 import { LogoutButton } from "./logout-button";
 
 export default async function DashboardPage() {
@@ -26,8 +26,23 @@ export default async function DashboardPage() {
           Ассортимент
         </Link>
       ) : null}
+      {canAccessWarehouse(session.role) ? (
+        <Link href="/dashboard/orders" className="text-sm underline">
+          Заказы
+        </Link>
+      ) : null}
+      {canManageStaff(session.role) ? (
+        <Link href="/dashboard/staff" className="text-sm underline">
+          Сотрудники
+        </Link>
+      ) : null}
+      {canAccessSupport(session.role) ? (
+        <Link href="/dashboard/support" className="text-sm underline">
+          Поддержка
+        </Link>
+      ) : null}
       <p className="text-sm text-zinc-700">
-        Заявки, склад, аналитика и учёт появятся на следующих шагах.
+        Аналитика и учёт появятся на следующих шагах.
       </p>
     </main>
   );

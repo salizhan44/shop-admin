@@ -24,15 +24,28 @@ model StaffUser {
   updatedAt    DateTime  @updatedAt
 }
 
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+enum SupportTicketStatus {
+  OPEN
+  CLOSED
+}
+
 model Customer {
-  id            String         @id @default(cuid())
-  email         String         @unique
+  id            String          @id @default(cuid())
+  email         String          @unique
   passwordHash  String
   name          String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   refreshTokens RefreshToken[]
   cart          Cart?
+  orders        Order[]
+  supportTickets SupportTicket[]
 }
 
 model RefreshToken {
@@ -47,14 +60,45 @@ model RefreshToken {
 }
 
 model Product {
-  id          String     @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
-  description String     @default("")
+  description String      @default("")
   priceCents  Int
-  isActive    Boolean    @default(true)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   cartItems   CartItem[]
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  customerId      String
+  customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  status          OrderStatus @default(PENDING)
+  totalCents      Int
+  rejectionReason String?
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model OrderItem {
+  id             String  @id @default(cuid())
+  orderId        String
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  productName    String
+  priceCents     Int
+  quantity       Int
+  lineTotalCents Int
+  createdAt      DateTime @default(now())
+
+  @@index([orderId])
 }
 
 model Cart {
@@ -77,4 +121,19 @@ model CartItem {
   updatedAt DateTime @updatedAt
 
   @@unique([cartId, productId])
+}
+
+model SupportTicket {
+  id         String               @id @default(cuid())
+  customerId String
+  customer   Customer             @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  subject    String
+  body       String
+  status     SupportTicketStatus  @default(OPEN)
+  staffReply String?
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+
+  @@index([customerId])
+  @@index([status])
 }
