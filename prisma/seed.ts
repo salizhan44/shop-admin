@@ -3,161 +3,135 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const SEED_PRODUCTS = [
-  {
-    name: "Хлеб белый",
-    description: "Нарезной батон, 400 г",
-    priceCents: 4500,
-    stockQuantity: 40,
-  },
-  {
-    name: "Молоко 1 л",
-    description: "Пастеризованное 2,5%",
-    priceCents: 8900,
-    stockQuantity: 30,
-  },
-  {
-    name: "Яйца С0, 10 шт",
-    description: "Куриные яйца категории С0",
-    priceCents: 11900,
-    stockQuantity: 25,
-  },
-  {
-    name: "Сыр Российский",
-    description: "Твёрдый сыр, 200 г",
-    priceCents: 24900,
-    stockQuantity: 18,
-  },
-  {
-    name: "Курица охлаждённая",
-    description: "Тушка, ~1,5 кг",
-    priceCents: 38900,
-    stockQuantity: 12,
-  },
-  {
-    name: "Рис 1 кг",
-    description: "Длиннозёрный, шлифованный",
-    priceCents: 9900,
-    stockQuantity: 35,
-  },
-  {
-    name: "Макароны 500 г",
-    description: "Горошек, группа А",
-    priceCents: 6900,
-    stockQuantity: 50,
-  },
-  {
-    name: "Масло подсолнечное 1 л",
-    description: "Рафинированное, дезодорированное",
-    priceCents: 14900,
-    stockQuantity: 22,
-  },
-  {
-    name: "Сахар 1 кг",
-    description: "Белый кристаллический",
-    priceCents: 7900,
-    stockQuantity: 28,
-  },
-  {
-    name: "Картофель 1 кг",
-    description: "Молодой, для варки",
-    priceCents: 5900,
-    stockQuantity: 60,
-  },
-  {
-    name: "Яблоки 1 кг",
-    description: "Сезонные, красные",
-    priceCents: 12900,
-    stockQuantity: 20,
-  },
-  {
-    name: "Бананы 1 кг",
-    description: "Свежие, Эквадор",
-    priceCents: 10900,
-    stockQuantity: 24,
-  },
-  {
-    name: "Вода 1,5 л",
-    description: "Негазированная питьевая",
-    priceCents: 4900,
-    stockQuantity: 45,
-  },
-  {
-    name: "Кофе молотый 250 г",
-    description: "Средняя обжарка, Arabica",
-    priceCents: 34900,
-    stockQuantity: 15,
-  },
-  {
-    name: "Чай чёрный 100 пак",
-    description: "Классический байховый",
-    priceCents: 18900,
-    stockQuantity: 20,
-  },
-  {
-    name: "Печенье «Юбилейное»",
-    description: "Сахарное, 112 г",
-    priceCents: 7900,
-    stockQuantity: 32,
-  },
-  {
-    name: "Йогурт натуральный",
-    description: "Без добавок, 390 г",
-    priceCents: 6900,
-    stockQuantity: 26,
-  },
-  {
-    name: "Колбаса докторская",
-    description: "Варёная, 500 г",
-    priceCents: 32900,
-    stockQuantity: 14,
-  },
-  {
-    name: "Помидоры 1 кг",
-    description: "Свежие, для салата",
-    priceCents: 19900,
-    stockQuantity: 16,
-  },
-  {
-    name: "Огурцы 1 кг",
-    description: "Свежие, тепличные",
-    priceCents: 14900,
-    stockQuantity: 18,
-  },
-  {
-    name: "Мука 2 кг",
-    description: "Пшеничная высший сорт",
-    priceCents: 11900,
-    stockQuantity: 30,
-  },
-  {
-    name: "Сметана 20%",
-    description: "Стакан 300 г",
-    priceCents: 8900,
-    stockQuantity: 22,
-  },
-  {
-    name: "Сок яблочный 1 л",
-    description: "100% без добавления сахара",
-    priceCents: 12900,
-    stockQuantity: 20,
-  },
-  {
-    name: "Шоколад молочный",
-    description: "Плитка 90 г",
-    priceCents: 9900,
-    stockQuantity: 40,
-  },
+const CATALOG_CATEGORIES = ["один", "два", "три", "четыре"] as const;
+const PRODUCTS_PER_CATEGORY = 5;
+
+const LOREM_WORDS = [
+  "lorem",
+  "ipsum",
+  "dolor",
+  "sit",
+  "amet",
+  "consectetur",
+  "adipiscing",
+  "elit",
+  "sed",
+  "do",
+  "eiusmod",
+  "tempor",
+  "incididunt",
+  "ut",
+  "labore",
+  "et",
+  "dolore",
+  "magna",
+  "aliqua",
+  "enim",
+  "ad",
+  "minim",
+  "veniam",
+  "quis",
+  "nostrud",
+  "exercitation",
+  "ullamco",
+  "laboris",
+  "nisi",
+  "aliquip",
+  "ex",
+  "ea",
+  "commodo",
+  "consequat",
+  "duis",
+  "aute",
+  "irure",
+  "in",
+  "reprehenderit",
+  "voluptate",
+  "velit",
+  "esse",
+  "cillum",
+  "fugiat",
+  "nulla",
+  "pariatur",
 ] as const;
 
+type CatalogProductSeed = {
+  name: string;
+  description: string;
+  priceCents: number;
+  stockQuantity: number;
+};
+
+function randomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randomLoremDescription(): string {
+  const wordCount = randomInt(6, 36);
+  const words: string[] = [];
+  for (let index = 0; index < wordCount; index += 1) {
+    words.push(LOREM_WORDS[randomInt(0, LOREM_WORDS.length - 1)]!);
+  }
+  const text = words.join(" ");
+  return text.charAt(0).toUpperCase() + text.slice(1) + ".";
+}
+
+function randomPriceCents(): number {
+  return randomInt(2500, 89900);
+}
+
+function randomStockQuantity(): number {
+  return randomInt(3, 8);
+}
+
+function buildCatalogProductName(productNumber: number, category: string): string {
+  return `Товар${productNumber} ${category}`;
+}
+
+function generateCatalogProducts(): CatalogProductSeed[] {
+  const products: CatalogProductSeed[] = [];
+
+  for (const category of CATALOG_CATEGORIES) {
+    for (let productNumber = 1; productNumber <= PRODUCTS_PER_CATEGORY; productNumber += 1) {
+      products.push({
+        name: buildCatalogProductName(productNumber, category),
+        description: randomLoremDescription(),
+        priceCents: randomPriceCents(),
+        stockQuantity: randomStockQuantity(),
+      });
+    }
+  }
+
+  return products;
+}
+
 async function seedProducts() {
-  for (const item of SEED_PRODUCTS) {
+  const catalogProducts = generateCatalogProducts();
+  const catalogNames = new Set(catalogProducts.map((item) => item.name));
+
+  await prisma.product.updateMany({
+    where: { name: { notIn: [...catalogNames] } },
+    data: { isActive: false },
+  });
+
+  for (const item of catalogProducts) {
     const existing = await prisma.product.findFirst({
       where: { name: item.name },
     });
+
     if (existing) {
+      await prisma.product.update({
+        where: { id: existing.id },
+        data: {
+          description: item.description,
+          priceCents: item.priceCents,
+          stockQuantity: item.stockQuantity,
+          isActive: true,
+        },
+      });
       continue;
     }
+
     await prisma.product.create({
       data: {
         name: item.name,

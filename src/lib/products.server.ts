@@ -17,6 +17,7 @@ export async function listActiveProducts(): Promise<ProductPublic[]> {
 
 export async function listCatalogProducts(): Promise<ProductAdmin[]> {
   return prisma.product.findMany({
+    where: { isActive: true },
     orderBy: { name: "asc" },
     select: {
       id: true,
