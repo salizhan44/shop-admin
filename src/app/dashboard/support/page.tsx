@@ -2,11 +2,13 @@ import { redirect } from "next/navigation";
 import { getStaffSession } from "@/lib/staff-session.server";
 import { canAccessSupport } from "@/lib/roles.shared";
 import { listSupportTicketsForStaff } from "@/lib/support.server";
+import { getLatestSupportTicketUpdatedAt } from "@/lib/updates.server";
 import {
   formatSupportTicketDate,
   supportTicketStatusLabel,
   type SupportTicketStaffPublic,
 } from "@/lib/support.shared";
+import { RefreshWithUpdates } from "@/components/refresh-with-updates";
 import { TicketActions } from "./ticket-actions";
 
 function TicketCard(props: { ticket: SupportTicketStaffPublic }) {
@@ -63,6 +65,7 @@ export default async function SupportPage() {
   }
 
   const tickets = await listSupportTicketsForStaff();
+  const latestAt = await getLatestSupportTicketUpdatedAt();
   const open = tickets.filter((ticket) => ticket.status === "OPEN");
   const closed = tickets.filter((ticket) => ticket.status === "CLOSED");
 
@@ -76,6 +79,10 @@ export default async function SupportPage() {
         <p className="text-sm text-zinc-600">
           Обращения из приложения. Ответьте клиенту и закройте обращение.
         </p>
+        <RefreshWithUpdates
+          pollUrl="/api/staff/support/tickets/updates"
+          initialLatestAt={latestAt}
+        />
       </header>
 
       <section className="flex flex-col gap-3">

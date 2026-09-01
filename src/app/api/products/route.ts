@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   const name = json.name.trim();
   const description = json.description.trim();
-  const priceCents = parsePriceToCents(json.priceRubles);
+  const priceCents = parsePriceToCents(json.priceSom);
   const stockQuantity = parseStockQuantity(json.stockQuantity);
   if (!name || priceCents === null || stockQuantity === null) {
     return Response.json(

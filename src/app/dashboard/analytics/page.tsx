@@ -7,7 +7,7 @@ import {
   getTopProducts,
 } from "@/lib/analytics.server";
 import { formatReportDay } from "@/lib/analytics.shared";
-import { formatPriceRubles } from "@/lib/products.shared";
+import { formatPriceSomLabel } from "@/lib/products.shared";
 
 export default async function AnalyticsPage() {
   const session = await getStaffSession();
@@ -52,14 +52,14 @@ export default async function AnalyticsPage() {
           <li className="rounded border border-zinc-200 bg-white px-3 py-2">
             <p className="text-sm text-zinc-600">Подтверждённые продажи</p>
             <p className="font-medium">
-              {formatPriceRubles(summary.confirmedRevenueCents)} ₽ ·{" "}
+              {formatPriceSomLabel(summary.confirmedRevenueCents)} ·{" "}
               {summary.confirmedOrderCount} заказов
             </p>
           </li>
           <li className="rounded border border-zinc-200 bg-white px-3 py-2">
             <p className="text-sm text-zinc-600">Ожидают подтверждения</p>
             <p className="font-medium">
-              {formatPriceRubles(summary.pendingTotalCents)} ₽ ·{" "}
+              {formatPriceSomLabel(summary.pendingTotalCents)} ·{" "}
               {summary.pendingOrderCount} заказов
             </p>
           </li>
@@ -90,7 +90,7 @@ export default async function AnalyticsPage() {
                   </p>
                 </div>
                 <span className="text-sm text-zinc-700">
-                  {formatPriceRubles(product.revenueCents)} ₽
+                  {formatPriceSomLabel(product.revenueCents)}
                 </span>
               </li>
             ))}
@@ -113,7 +113,7 @@ export default async function AnalyticsPage() {
               >
                 <span className="font-medium">{formatReportDay(day.date)}</span>
                 <span className="text-sm text-zinc-700">
-                  {formatPriceRubles(day.revenueCents)} ₽ · {day.orderCount}{" "}
+                  {formatPriceSomLabel(day.revenueCents)} · {day.orderCount}{" "}
                   зак.
                 </span>
               </li>

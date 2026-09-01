@@ -8,6 +8,7 @@ import {
   staffRoleLabel,
   type AssignableStaffRole,
 } from "@/lib/roles.shared";
+import { PasswordInput } from "@/components/password-input";
 
 export function StaffForm() {
   const router = useRouter();
@@ -74,13 +75,11 @@ export function StaffForm() {
       </label>
       <label className="flex flex-col gap-1 text-sm">
         Пароль
-        <input
-          required
-          type="password"
-          autoComplete="new-password"
+        <PasswordInput
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="rounded border border-zinc-300 bg-white px-3 py-2"
+          onChange={setPassword}
+          autoComplete="new-password"
+          required
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getStaffSession } from "@/lib/staff-session.server";
 import { canManageCatalog } from "@/lib/roles.shared";
 import { listCatalogProducts } from "@/lib/products.server";
-import { formatPriceRubles } from "@/lib/products.shared";
+import { formatPriceSomLabel } from "@/lib/products.shared";
 import { ProductForm } from "./product-form";
 import { StockAdjust } from "./stock-adjust";
 
@@ -53,7 +53,7 @@ export default async function ProductsPage() {
               >
                 <p className="font-medium">{product.name}</p>
                 <p className="text-sm text-zinc-600">
-                  {formatPriceRubles(product.priceCents)} ₽ · на складе{" "}
+                  {formatPriceSomLabel(product.priceCents)} · на складе{" "}
                   {product.stockQuantity} шт.
                 </p>
                 {product.description ? (

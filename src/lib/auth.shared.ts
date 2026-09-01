@@ -44,7 +44,7 @@ export type ProductPublic = {
 export type ProductCreateBody = {
   name: string;
   description: string;
-  priceRubles: string;
+  priceSom: string;
   stockQuantity: string;
 };
 

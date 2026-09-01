@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { ApiErrorBody } from "@/lib/auth.shared";
+import { PasswordInput } from "@/components/password-input";
 
 export function LoginForm() {
   const router = useRouter();
@@ -53,13 +54,11 @@ export function LoginForm() {
       </label>
       <label className="flex flex-col gap-1 text-sm">
         Пароль
-        <input
-          type="password"
+        <PasswordInput
+          value={password}
+          onChange={setPassword}
           autoComplete="current-password"
           required
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="rounded border border-zinc-300 bg-white px-3 py-2"
         />
       </label>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}

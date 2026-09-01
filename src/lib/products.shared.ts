@@ -23,7 +23,7 @@ export function isProductCreateBody(value: unknown): value is ProductCreateBody 
   return (
     typeof body.name === "string" &&
     typeof body.description === "string" &&
-    typeof body.priceRubles === "string" &&
+    typeof body.priceSom === "string" &&
     typeof body.stockQuantity === "string"
   );
 }
@@ -40,8 +40,8 @@ export function isProductStockBody(value: unknown): value is ProductStockBody {
   );
 }
 
-export function parsePriceToCents(priceRubles: string): number | null {
-  const normalized = priceRubles.trim().replace(",", ".");
+export function parsePriceToCents(priceSom: string): number | null {
+  const normalized = priceSom.trim().replace(",", ".");
   if (!/^\d+(\.\d{1,2})?$/.test(normalized)) {
     return null;
   }
@@ -64,6 +64,10 @@ export function parseStockQuantity(value: string): number | null {
   return quantity;
 }
 
-export function formatPriceRubles(priceCents: number): string {
+export function formatPriceSom(priceCents: number): string {
   return (priceCents / 100).toFixed(2);
+}
+
+export function formatPriceSomLabel(priceCents: number): string {
+  return `${formatPriceSom(priceCents)} сом`;
 }

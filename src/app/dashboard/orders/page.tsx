@@ -2,12 +2,14 @@ import { redirect } from "next/navigation";
 import { getStaffSession } from "@/lib/staff-session.server";
 import { canAccessWarehouse } from "@/lib/roles.shared";
 import { listOrdersForStaff } from "@/lib/orders.server";
+import { getLatestOrderUpdatedAt } from "@/lib/updates.server";
 import {
   formatOrderDate,
   orderStatusLabel,
   type OrderStaffPublic,
 } from "@/lib/orders.shared";
-import { formatPriceRubles } from "@/lib/products.shared";
+import { formatPriceSomLabel } from "@/lib/products.shared";
+import { RefreshWithUpdates } from "@/components/refresh-with-updates";
 import { OrderActions } from "./order-actions";
 
 function OrderCard(props: { order: OrderStaffPublic }) {
@@ -39,8 +41,8 @@ function OrderCard(props: { order: OrderStaffPublic }) {
           return (
             <li key={item.id} className={notEnough ? "text-red-700" : undefined}>
               {item.productName} · {item.quantity} ×{" "}
-              {formatPriceRubles(item.priceCents)} ₽ ={" "}
-              {formatPriceRubles(item.lineTotalCents)} ₽
+              {formatPriceSomLabel(item.priceCents)} ={" "}
+              {formatPriceSomLabel(item.lineTotalCents)}
               {order.status === "PENDING" ? (
                 <span>
                   {" "}
@@ -53,7 +55,7 @@ function OrderCard(props: { order: OrderStaffPublic }) {
         })}
       </ul>
       <p className="mt-2 text-sm font-medium">
-        Итого: {formatPriceRubles(order.totalCents)} ₽
+        Итого: {formatPriceSomLabel(order.totalCents)}
       </p>
       {order.rejectionReason ? (
         <p className="mt-2 text-sm text-red-700">
@@ -87,6 +89,7 @@ export default async function OrdersPage() {
   }
 
   const orders = await listOrdersForStaff();
+  const latestAt = await getLatestOrderUpdatedAt();
   const pending = orders.filter((order) => order.status === "PENDING");
   const processed = orders.filter((order) => order.status !== "PENDING");
 
@@ -100,6 +103,10 @@ export default async function OrdersPage() {
         <p className="text-sm text-zinc-600">
           Новые заявки из приложения. Подтверждение и отклонение — здесь.
         </p>
+        <RefreshWithUpdates
+          pollUrl="/api/staff/orders/updates"
+          initialLatestAt={latestAt}
+        />
       </header>
 
       <section className="flex flex-col gap-3">

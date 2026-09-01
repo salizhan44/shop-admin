@@ -7,7 +7,7 @@ import {
   sumPendingTotal,
 } from "@/lib/accounting.shared";
 import { formatOrderDate, orderStatusLabel } from "@/lib/orders.shared";
-import { formatPriceRubles } from "@/lib/products.shared";
+import { formatPriceSomLabel } from "@/lib/products.shared";
 
 export default async function AccountingPage() {
   const session = await getStaffSession();
@@ -51,12 +51,12 @@ export default async function AccountingPage() {
           <li className="rounded border border-zinc-200 bg-white px-3 py-2">
             <p className="text-sm text-zinc-600">Подтверждённая выручка</p>
             <p className="font-medium">
-              {formatPriceRubles(confirmedRevenue)} ₽
+              {formatPriceSomLabel(confirmedRevenue)}
             </p>
           </li>
           <li className="rounded border border-zinc-200 bg-white px-3 py-2">
             <p className="text-sm text-zinc-600">Ожидают подтверждения</p>
-            <p className="font-medium">{formatPriceRubles(pendingTotal)} ₽</p>
+            <p className="font-medium">{formatPriceSomLabel(pendingTotal)}</p>
           </li>
         </ul>
       </section>
@@ -75,7 +75,7 @@ export default async function AccountingPage() {
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">
-                      {formatPriceRubles(order.totalCents)} ₽
+                      {formatPriceSomLabel(order.totalCents)}
                     </p>
                     <p className="text-sm text-zinc-600">
                       {order.customerName} · {order.customerEmail}
