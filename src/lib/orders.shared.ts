@@ -11,6 +11,10 @@ export type OrderLinePublic = {
   lineTotalCents: number;
 };
 
+export type OrderLineStaffPublic = OrderLinePublic & {
+  stockQuantityOnHand: number;
+};
+
 export type OrderPublic = {
   id: string;
   status: OrderStatus;
@@ -20,7 +24,8 @@ export type OrderPublic = {
   createdAt: string;
 };
 
-export type OrderStaffPublic = OrderPublic & {
+export type OrderStaffPublic = Omit<OrderPublic, "items"> & {
+  items: OrderLineStaffPublic[];
   customerName: string;
   customerEmail: string;
 };
@@ -111,6 +116,21 @@ export function isRejectOrderBody(value: unknown): value is RejectOrderBody {
   return typeof body.reason === "string";
 }
 
+export function toOrderLineStaff(input: {
+  id: string;
+  productId: string;
+  productName: string;
+  priceCents: number;
+  quantity: number;
+  lineTotalCents: number;
+  stockQuantityOnHand: number;
+}): OrderLineStaffPublic {
+  return {
+    ...toOrderLine(input),
+    stockQuantityOnHand: input.stockQuantityOnHand,
+  };
+}
+
 export function toOrderStaffPublic(input: {
   id: string;
   status: OrderStatus;
@@ -125,12 +145,18 @@ export function toOrderStaffPublic(input: {
     priceCents: number;
     quantity: number;
     lineTotalCents: number;
+    stockQuantityOnHand: number;
   }>;
 }): OrderStaffPublic {
   return {
-    ...toOrderPublic(input),
+    id: input.id,
+    status: input.status,
+    totalCents: input.totalCents,
+    rejectionReason: input.rejectionReason,
+    createdAt: input.createdAt.toISOString(),
     customerName: input.customer.name,
     customerEmail: input.customer.email,
+    items: input.items.map((item) => toOrderLineStaff(item)),
   };
 }
 

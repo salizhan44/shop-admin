@@ -60,15 +60,16 @@ model RefreshToken {
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  name        String
-  description String      @default("")
-  priceCents  Int
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
+  id            String      @id @default(cuid())
+  name          String
+  description   String      @default("")
+  priceCents    Int
+  stockQuantity Int         @default(0)
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
 }
 
 model Order {

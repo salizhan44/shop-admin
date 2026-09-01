@@ -11,7 +11,7 @@ function roleAccessHint(role: StaffRole): string {
     case "WAREHOUSE":
       return "Заказы, без аналитики и учёта";
     case "ACCOUNTANT":
-      return "Учёт (позже), без аналитики владельца";
+      return "Учёт, без аналитики владельца";
     case "SUPPORT":
       return "Обращения клиентов";
     default:

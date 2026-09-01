@@ -8,6 +8,7 @@ import {
 import {
   isProductCreateBody,
   parsePriceToCents,
+  parseStockQuantity,
 } from "@/lib/products.shared";
 import type { ApiErrorBody, ProductPublic } from "@/lib/auth.shared";
 
@@ -46,13 +47,22 @@ export async function POST(request: Request) {
   const name = json.name.trim();
   const description = json.description.trim();
   const priceCents = parsePriceToCents(json.priceRubles);
-  if (!name || priceCents === null) {
+  const stockQuantity = parseStockQuantity(json.stockQuantity);
+  if (!name || priceCents === null || stockQuantity === null) {
     return Response.json(
-      { error: "Название обязательно, цена — число больше 0" } satisfies ApiErrorBody,
+      {
+        error:
+          "Название обязательно, цена — число больше 0, остаток — целое число от 0",
+      } satisfies ApiErrorBody,
       { status: 400 },
     );
   }
 
-  const product = await createCatalogProduct({ name, description, priceCents });
+  const product = await createCatalogProduct({
+    name,
+    description,
+    priceCents,
+    stockQuantity,
+  });
   return Response.json({ product }, { status: 201 });
 }

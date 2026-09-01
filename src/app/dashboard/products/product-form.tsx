@@ -9,6 +9,7 @@ export function ProductForm() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [priceRubles, setPriceRubles] = useState("");
+  const [stockQuantity, setStockQuantity] = useState("0");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -21,7 +22,7 @@ export function ProductForm() {
       const response = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description, priceRubles }),
+        body: JSON.stringify({ name, description, priceRubles, stockQuantity }),
       });
       const data = (await response.json()) as ApiErrorBody | { product: unknown };
 
@@ -33,6 +34,7 @@ export function ProductForm() {
       setName("");
       setDescription("");
       setPriceRubles("");
+      setStockQuantity("0");
       router.refresh();
     } catch {
       setError("Нет связи с сервером");
@@ -68,6 +70,17 @@ export function ProductForm() {
           placeholder="199.90"
           value={priceRubles}
           onChange={(event) => setPriceRubles(event.target.value)}
+          className="rounded border border-zinc-300 bg-white px-3 py-2"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        Остаток на складе, шт.
+        <input
+          required
+          inputMode="numeric"
+          placeholder="0"
+          value={stockQuantity}
+          onChange={(event) => setStockQuantity(event.target.value)}
           className="rounded border border-zinc-300 bg-white px-3 py-2"
         />
       </label>

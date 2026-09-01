@@ -14,13 +14,37 @@ export async function listOrdersForStaff(): Promise<OrderStaffPublic[]> {
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      items: true,
+      items: {
+        include: {
+          product: {
+            select: { stockQuantity: true },
+          },
+        },
+      },
       customer: {
         select: { name: true, email: true },
       },
     },
   });
-  return orders.map((order) => toOrderStaffPublic(order));
+  return orders.map((order) =>
+    toOrderStaffPublic({
+      id: order.id,
+      status: order.status,
+      totalCents: order.totalCents,
+      rejectionReason: order.rejectionReason,
+      createdAt: order.createdAt,
+      customer: order.customer,
+      items: order.items.map((item) => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.productName,
+        priceCents: item.priceCents,
+        quantity: item.quantity,
+        lineTotalCents: item.lineTotalCents,
+        stockQuantityOnHand: item.product.stockQuantity,
+      })),
+    }),
+  );
 }
 
 export async function listOrdersForCustomer(
@@ -44,7 +68,18 @@ async function getOrderById(orderId: string) {
 export async function confirmOrder(
   orderId: string,
 ): Promise<OrderPublic | { error: string; status: number }> {
-  const order = await getOrderById(orderId);
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      items: {
+        include: {
+          product: {
+            select: { id: true, name: true, stockQuantity: true },
+          },
+        },
+      },
+    },
+  });
   if (!order) {
     return { error: "Заказ не найден", status: 404 };
   }
@@ -52,15 +87,36 @@ export async function confirmOrder(
     return { error: "Заказ уже обработан", status: 400 };
   }
 
-  const updated = await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      status: "CONFIRMED",
-      rejectionReason: null,
-    },
-    include: orderInclude,
-  });
-  return toOrderPublic(updated);
+  for (const item of order.items) {
+    if (item.product.stockQuantity < item.quantity) {
+      return {
+        error: `Недостаточно «${item.productName}»: на складе ${item.product.stockQuantity}, нужно ${item.quantity}`,
+        status: 400,
+      };
+    }
+  }
+
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      for (const item of order.items) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: { stockQuantity: { decrement: item.quantity } },
+        });
+      }
+      return tx.order.update({
+        where: { id: orderId },
+        data: {
+          status: "CONFIRMED",
+          rejectionReason: null,
+        },
+        include: orderInclude,
+      });
+    });
+    return toOrderPublic(updated);
+  } catch {
+    return { error: "Не удалось подтвердить заказ", status: 500 };
+  }
 }
 
 export async function rejectOrder(

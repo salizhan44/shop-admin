@@ -32,13 +32,25 @@ function OrderCard(props: { order: OrderStaffPublic }) {
         </span>
       </div>
       <ul className="mt-3 flex flex-col gap-1 text-sm text-zinc-700">
-        {order.items.map((item) => (
-          <li key={item.id}>
-            {item.productName} · {item.quantity} ×{" "}
-            {formatPriceRubles(item.priceCents)} ₽ ={" "}
-            {formatPriceRubles(item.lineTotalCents)} ₽
-          </li>
-        ))}
+        {order.items.map((item) => {
+          const notEnough =
+            order.status === "PENDING" &&
+            item.stockQuantityOnHand < item.quantity;
+          return (
+            <li key={item.id} className={notEnough ? "text-red-700" : undefined}>
+              {item.productName} · {item.quantity} ×{" "}
+              {formatPriceRubles(item.priceCents)} ₽ ={" "}
+              {formatPriceRubles(item.lineTotalCents)} ₽
+              {order.status === "PENDING" ? (
+                <span>
+                  {" "}
+                  · на складе {item.stockQuantityOnHand} шт.
+                  {notEnough ? " (не хватает)" : ""}
+                </span>
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
       <p className="mt-2 text-sm font-medium">
         Итого: {formatPriceRubles(order.totalCents)} ₽

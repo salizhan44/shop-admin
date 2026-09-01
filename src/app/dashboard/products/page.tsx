@@ -4,6 +4,7 @@ import { canManageCatalog } from "@/lib/roles.shared";
 import { listCatalogProducts } from "@/lib/products.server";
 import { formatPriceRubles } from "@/lib/products.shared";
 import { ProductForm } from "./product-form";
+import { StockAdjust } from "./stock-adjust";
 
 export default async function ProductsPage() {
   const session = await getStaffSession();
@@ -34,7 +35,8 @@ export default async function ProductsPage() {
         </a>
         <h1 className="text-2xl font-semibold">Ассортимент</h1>
         <p className="text-sm text-zinc-600">
-          Товары сразу видны в приложении.
+          Товары сразу видны в приложении. Остаток списывается при подтверждении
+          заказа.
         </p>
       </header>
       <ProductForm />
@@ -51,11 +53,16 @@ export default async function ProductsPage() {
               >
                 <p className="font-medium">{product.name}</p>
                 <p className="text-sm text-zinc-600">
-                  {formatPriceRubles(product.priceCents)} ₽
+                  {formatPriceRubles(product.priceCents)} ₽ · на складе{" "}
+                  {product.stockQuantity} шт.
                 </p>
                 {product.description ? (
                   <p className="mt-1 text-sm text-zinc-600">{product.description}</p>
                 ) : null}
+                <StockAdjust
+                  productId={product.id}
+                  initialStock={product.stockQuantity}
+                />
               </li>
             ))}
           </ul>

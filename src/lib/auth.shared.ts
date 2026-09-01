@@ -45,6 +45,7 @@ export type ProductCreateBody = {
   name: string;
   description: string;
   priceRubles: string;
+  stockQuantity: string;
 };
 
 export type ApiErrorBody = {
