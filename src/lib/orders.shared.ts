@@ -19,6 +19,9 @@ export type OrderPublic = {
   id: string;
   status: OrderStatus;
   totalCents: number;
+  phone: string;
+  address: string;
+  comment: string | null;
   rejectionReason: string | null;
   items: OrderLinePublic[];
   createdAt: string;
@@ -28,6 +31,12 @@ export type OrderStaffPublic = Omit<OrderPublic, "items"> & {
   items: OrderLineStaffPublic[];
   customerName: string;
   customerEmail: string;
+};
+
+export type OrderCheckoutBody = {
+  phone: string;
+  address: string;
+  comment: string;
 };
 
 export type RejectOrderBody = {
@@ -56,6 +65,9 @@ export function toOrderPublic(input: {
   id: string;
   status: OrderStatus;
   totalCents: number;
+  phone: string;
+  address: string;
+  comment: string | null;
   rejectionReason: string | null;
   createdAt: Date;
   items: Array<{
@@ -71,6 +83,9 @@ export function toOrderPublic(input: {
     id: input.id,
     status: input.status,
     totalCents: input.totalCents,
+    phone: input.phone,
+    address: input.address,
+    comment: input.comment,
     rejectionReason: input.rejectionReason,
     createdAt: input.createdAt.toISOString(),
     items: input.items.map((item) => toOrderLine(item)),
@@ -85,6 +100,8 @@ export function isOrderPublic(value: unknown): value is OrderPublic {
     id?: unknown;
     status?: unknown;
     totalCents?: unknown;
+    phone?: unknown;
+    address?: unknown;
     items?: unknown;
     createdAt?: unknown;
   };
@@ -92,6 +109,8 @@ export function isOrderPublic(value: unknown): value is OrderPublic {
     typeof body.id === "string" &&
     typeof body.status === "string" &&
     typeof body.totalCents === "number" &&
+    typeof body.phone === "string" &&
+    typeof body.address === "string" &&
     Array.isArray(body.items) &&
     typeof body.createdAt === "string"
   );
@@ -116,6 +135,52 @@ export function isRejectOrderBody(value: unknown): value is RejectOrderBody {
   return typeof body.reason === "string";
 }
 
+export function isOrderCheckoutBody(value: unknown): value is OrderCheckoutBody {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const body = value as Record<string, unknown>;
+  return (
+    typeof body.phone === "string" &&
+    typeof body.address === "string" &&
+    typeof body.comment === "string"
+  );
+}
+
+export function normalizeOrderPhone(phone: string): string | null {
+  const trimmed = phone.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length < 9 || digits.length > 15) {
+    return null;
+  }
+  if (trimmed.length > 40) {
+    return null;
+  }
+  return trimmed;
+}
+
+export function normalizeOrderAddress(address: string): string | null {
+  const trimmed = address.trim();
+  if (trimmed.length < 5 || trimmed.length > 500) {
+    return null;
+  }
+  return trimmed;
+}
+
+export function normalizeOrderComment(comment: string): string | null {
+  const trimmed = comment.trim();
+  if (!trimmed) {
+    return null;
+  }
+  if (trimmed.length > 1000) {
+    return null;
+  }
+  return trimmed;
+}
+
 export function toOrderLineStaff(input: {
   id: string;
   productId: string;
@@ -135,6 +200,9 @@ export function toOrderStaffPublic(input: {
   id: string;
   status: OrderStatus;
   totalCents: number;
+  phone: string;
+  address: string;
+  comment: string | null;
   rejectionReason: string | null;
   createdAt: Date;
   customer: { name: string; email: string };
@@ -152,6 +220,9 @@ export function toOrderStaffPublic(input: {
     id: input.id,
     status: input.status,
     totalCents: input.totalCents,
+    phone: input.phone,
+    address: input.address,
+    comment: input.comment,
     rejectionReason: input.rejectionReason,
     createdAt: input.createdAt.toISOString(),
     customerName: input.customer.name,

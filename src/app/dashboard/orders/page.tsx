@@ -25,6 +25,15 @@ function OrderCard(props: { order: OrderStaffPublic }) {
           <p className="text-sm text-zinc-600">
             {order.customerName} · {order.customerEmail}
           </p>
+          {order.phone ? (
+            <p className="text-sm text-zinc-600">Тел: {order.phone}</p>
+          ) : null}
+          {order.address ? (
+            <p className="text-sm text-zinc-600">Адрес: {order.address}</p>
+          ) : null}
+          {order.comment ? (
+            <p className="text-sm text-zinc-600">Комментарий: {order.comment}</p>
+          ) : null}
           <p className="text-sm text-zinc-600">
             {formatOrderDate(order.createdAt)}
           </p>

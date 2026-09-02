@@ -78,6 +78,9 @@ model Order {
   customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
   status          OrderStatus @default(PENDING)
   totalCents      Int
+  phone           String      @default("")
+  address         String      @default("")
+  comment         String?
   rejectionReason String?
   items           OrderItem[]
   createdAt       DateTime    @default(now())

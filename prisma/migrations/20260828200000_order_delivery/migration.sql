@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Order" ADD COLUMN "phone" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Order" ADD COLUMN "address" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Order" ADD COLUMN "comment" TEXT;

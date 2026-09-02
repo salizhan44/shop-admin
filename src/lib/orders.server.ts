@@ -31,6 +31,9 @@ export async function listOrdersForStaff(): Promise<OrderStaffPublic[]> {
       id: order.id,
       status: order.status,
       totalCents: order.totalCents,
+      phone: order.phone,
+      address: order.address,
+      comment: order.comment,
       rejectionReason: order.rejectionReason,
       createdAt: order.createdAt,
       customer: order.customer,
@@ -149,6 +152,11 @@ export async function rejectOrder(
 
 export async function createOrderFromCart(
   customerId: string,
+  delivery: {
+    phone: string;
+    address: string;
+    comment: string | null;
+  },
 ): Promise<OrderPublic | { error: string; status: number }> {
   const cart = await prisma.cart.findUnique({
     where: { customerId },
@@ -200,6 +208,9 @@ export async function createOrderFromCart(
         customerId,
         status: "PENDING",
         totalCents,
+        phone: delivery.phone,
+        address: delivery.address,
+        comment: delivery.comment,
         items: {
           create: lineInputs,
         },
