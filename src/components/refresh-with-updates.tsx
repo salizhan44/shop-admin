@@ -61,13 +61,17 @@ export function RefreshWithUpdates(props: {
       <button
         type="button"
         onClick={onRefresh}
-        className="rounded border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-800 hover:bg-zinc-50"
+        aria-label="Обновить"
+        title="Обновить"
+        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-300 bg-white text-[#a1a1aa] hover:bg-zinc-50"
       >
-        Обновить
+        <span className="-mt-1 text-[22px] leading-none" aria-hidden>
+          ↻
+        </span>
       </button>
       {hasUpdates ? (
         <span
-          className="h-2.5 w-2.5 rounded-full bg-green-500"
+          className="h-2.5 w-2.5 shrink-0 rounded-full bg-green-500"
           title="Есть новые данные"
           aria-label="Есть новые данные"
         />

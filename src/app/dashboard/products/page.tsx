@@ -3,6 +3,8 @@ import { getStaffSession } from "@/lib/staff-session.server";
 import { canManageCatalog } from "@/lib/roles.shared";
 import { listCatalogProducts } from "@/lib/products.server";
 import { formatPriceSomLabel } from "@/lib/products.shared";
+import { PageHeader } from "@/components/page-header";
+import { AccessDenied } from "@/components/access-denied";
 import { ProductForm } from "./product-form";
 import { StockAdjust } from "./stock-adjust";
 
@@ -13,32 +15,21 @@ export default async function ProductsPage() {
   }
   if (!canManageCatalog(session.role)) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 px-4 py-10">
-        <a href="/dashboard" className="text-sm text-zinc-600 underline">
-          Назад к панели
-        </a>
-        <h1 className="text-2xl font-semibold">Ассортимент</h1>
-        <p className="text-sm text-zinc-700">
-          У вашей роли нет доступа к управлению каталогом.
-        </p>
-      </main>
+      <AccessDenied
+        title="Ассортимент"
+        message="У вашей роли нет доступа к управлению каталогом."
+      />
     );
   }
 
   const products = await listCatalogProducts();
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-4 py-10">
-      <header className="flex flex-col gap-2">
-        <a href="/dashboard" className="text-sm text-zinc-600 underline">
-          Назад к панели
-        </a>
-        <h1 className="text-2xl font-semibold">Ассортимент</h1>
-        <p className="text-sm text-zinc-600">
-          Товары сразу видны в приложении. Остаток списывается при подтверждении
-          заказа.
-        </p>
-      </header>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Ассортимент"
+        description="Товары сразу видны в приложении. Остаток списывается при подтверждении заказа."
+      />
       <ProductForm />
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">Список</h2>
@@ -49,7 +40,7 @@ export default async function ProductsPage() {
             {products.map((product) => (
               <li
                 key={product.id}
-                className="rounded border border-zinc-200 bg-white px-3 py-2"
+                className="rounded-xl border border-zinc-200 bg-white px-4 py-3"
               >
                 <p className="font-medium">{product.name}</p>
                 <p className="text-sm text-zinc-600">
@@ -57,7 +48,9 @@ export default async function ProductsPage() {
                   {product.stockQuantity} шт.
                 </p>
                 {product.description ? (
-                  <p className="mt-1 text-sm text-zinc-600">{product.description}</p>
+                  <p className="mt-1 text-sm text-zinc-600">
+                    {product.description}
+                  </p>
                 ) : null}
                 <StockAdjust
                   productId={product.id}
@@ -68,6 +61,6 @@ export default async function ProductsPage() {
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
 }

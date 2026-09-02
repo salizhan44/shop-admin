@@ -8,6 +8,8 @@ import {
 } from "@/lib/analytics.server";
 import { formatReportDay } from "@/lib/analytics.shared";
 import { formatPriceSomLabel } from "@/lib/products.shared";
+import { PageHeader } from "@/components/page-header";
+import { AccessDenied } from "@/components/access-denied";
 
 export default async function AnalyticsPage() {
   const session = await getStaffSession();
@@ -16,15 +18,10 @@ export default async function AnalyticsPage() {
   }
   if (!canAccessAnalytics(session.role)) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 px-4 py-10">
-        <a href="/dashboard" className="text-sm text-zinc-600 underline">
-          Назад к панели
-        </a>
-        <h1 className="text-2xl font-semibold">Аналитика</h1>
-        <p className="text-sm text-zinc-700">
-          Раздел доступен только владельцу.
-        </p>
-      </main>
+      <AccessDenied
+        title="Аналитика"
+        message="Раздел доступен только владельцу."
+      />
     );
   }
 
@@ -35,37 +32,34 @@ export default async function AnalyticsPage() {
   ]);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-4 py-10">
-      <header className="flex flex-col gap-2">
-        <a href="/dashboard" className="text-sm text-zinc-600 underline">
-          Назад к панели
-        </a>
-        <h1 className="text-2xl font-semibold">Аналитика</h1>
-        <p className="text-sm text-zinc-600">
-          Продажи по подтверждённым заказам. Ожидающие и отклонённые — отдельно.
-        </p>
-      </header>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Аналитика"
+        description="Продажи по подтверждённым заказам. Ожидающие и отклонённые — отдельно."
+      />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">Сводка</h2>
-        <ul className="flex flex-col gap-2">
-          <li className="rounded border border-zinc-200 bg-white px-3 py-2">
+        <ul className="grid gap-2 sm:grid-cols-3">
+          <li className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
             <p className="text-sm text-zinc-600">Подтверждённые продажи</p>
-            <p className="font-medium">
+            <p className="mt-1 font-medium">
               {formatPriceSomLabel(summary.confirmedRevenueCents)} ·{" "}
               {summary.confirmedOrderCount} заказов
             </p>
           </li>
-          <li className="rounded border border-zinc-200 bg-white px-3 py-2">
+          <li className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
             <p className="text-sm text-zinc-600">Ожидают подтверждения</p>
-            <p className="font-medium">
+            <p className="mt-1 font-medium">
               {formatPriceSomLabel(summary.pendingTotalCents)} ·{" "}
               {summary.pendingOrderCount} заказов
             </p>
           </li>
-          <li className="rounded border border-zinc-200 bg-white px-3 py-2">
+          <li className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
             <p className="text-sm text-zinc-600">Отклонённые</p>
-            <p className="font-medium">{summary.rejectedOrderCount} заказов</p>
+            <p className="mt-1 font-medium">
+              {summary.rejectedOrderCount} заказов
+            </p>
           </li>
         </ul>
       </section>
@@ -81,15 +75,15 @@ export default async function AnalyticsPage() {
             {topProducts.map((product) => (
               <li
                 key={product.productId}
-                className="flex items-center justify-between rounded border border-zinc-200 bg-white px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3"
               >
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium">{product.productName}</p>
                   <p className="text-sm text-zinc-600">
                     {product.quantitySold} шт.
                   </p>
                 </div>
-                <span className="text-sm text-zinc-700">
+                <span className="shrink-0 text-sm text-zinc-700">
                   {formatPriceSomLabel(product.revenueCents)}
                 </span>
               </li>
@@ -109,7 +103,7 @@ export default async function AnalyticsPage() {
             {dailySales.map((day) => (
               <li
                 key={day.date}
-                className="flex items-center justify-between rounded border border-zinc-200 bg-white px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3"
               >
                 <span className="font-medium">{formatReportDay(day.date)}</span>
                 <span className="text-sm text-zinc-700">
@@ -121,6 +115,6 @@ export default async function AnalyticsPage() {
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
 }

@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getStaffSession } from "@/lib/staff-session.server";
 import { canManageStaff, staffRoleLabel, type StaffRole } from "@/lib/roles.shared";
 import { listStaffUsers } from "@/lib/staff.server";
+import { PageHeader } from "@/components/page-header";
+import { AccessDenied } from "@/components/access-denied";
 import { StaffForm } from "./staff-form";
 
 function roleAccessHint(role: StaffRole): string {
@@ -26,32 +28,21 @@ export default async function StaffPage() {
   }
   if (!canManageStaff(session.role)) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-4 px-4 py-10">
-        <a href="/dashboard" className="text-sm text-zinc-600 underline">
-          Назад к панели
-        </a>
-        <h1 className="text-2xl font-semibold">Сотрудники</h1>
-        <p className="text-sm text-zinc-700">
-          Управление ролями доступно только владельцу.
-        </p>
-      </main>
+      <AccessDenied
+        title="Сотрудники"
+        message="Управление ролями доступно только владельцу."
+      />
     );
   }
 
   const staff = await listStaffUsers();
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-4 py-10">
-      <header className="flex flex-col gap-2">
-        <a href="/dashboard" className="text-sm text-zinc-600 underline">
-          Назад к панели
-        </a>
-        <h1 className="text-2xl font-semibold">Сотрудники</h1>
-        <p className="text-sm text-zinc-600">
-          Добавление кладовщика, бухгалтера и поддержки. Владельца создаёт
-          только seed при первом запуске.
-        </p>
-      </header>
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Сотрудники"
+        description="Добавление кладовщика, бухгалтера и поддержки. Владельца создаёт только seed при первом запуске."
+      />
 
       <StaffForm />
 
@@ -64,7 +55,7 @@ export default async function StaffPage() {
             {staff.map((member) => (
               <li
                 key={member.id}
-                className="rounded border border-zinc-200 bg-white px-3 py-2"
+                className="rounded-xl border border-zinc-200 bg-white px-4 py-3"
               >
                 <p className="font-medium">{member.name}</p>
                 <p className="text-sm text-zinc-600">{member.email}</p>
@@ -76,6 +67,6 @@ export default async function StaffPage() {
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
 }

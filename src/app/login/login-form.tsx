@@ -40,8 +40,8 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex w-full max-w-sm flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm">
+    <form onSubmit={onSubmit} className="flex w-full flex-col gap-3">
+      <label className="flex flex-col gap-1 text-sm text-zinc-800">
         Email
         <input
           type="email"
@@ -49,10 +49,10 @@ export function LoginForm() {
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="rounded border border-zinc-300 bg-white px-3 py-2"
+          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-zinc-900 outline-none focus:border-zinc-500"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1 text-sm text-zinc-800">
         Пароль
         <PasswordInput
           value={password}
@@ -65,7 +65,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-60"
+        className="mt-1 rounded-lg bg-zinc-900 px-3 py-2.5 text-sm font-medium text-white disabled:opacity-60"
       >
         {pending ? "Входим…" : "Войти"}
       </button>
