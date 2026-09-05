@@ -40,6 +40,8 @@ model Customer {
   email         String          @unique
   passwordHash  String
   name          String
+  homeAddress   String          @default("")
+  avatarUrl     String          @default("")
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   refreshTokens RefreshToken[]

@@ -26,6 +26,8 @@ export type CustomerPublic = {
   id: string;
   email: string;
   name: string;
+  homeAddress: string;
+  avatarUrl: string;
 };
 
 export type CustomerAuthSuccess = {

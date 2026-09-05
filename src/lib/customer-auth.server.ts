@@ -34,10 +34,14 @@ export function toCustomerPublic(customer: {
   id: string;
   email: string;
   name: string;
+  homeAddress: string;
+  avatarUrl: string;
 }): CustomerPublic {
   return {
     id: customer.id,
     email: customer.email,
     name: customer.name,
+    homeAddress: customer.homeAddress,
+    avatarUrl: customer.avatarUrl,
   };
 }
