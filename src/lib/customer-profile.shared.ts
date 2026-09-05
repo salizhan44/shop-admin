@@ -63,6 +63,9 @@ export function validateAvatarUrl(avatarUrl: string): string | null {
   if (avatarUrl.length === 0) {
     return null;
   }
+  if (avatarUrl.startsWith("/uploads/avatars/")) {
+    return null;
+  }
   if (avatarUrl.length > AVATAR_URL_MAX_LENGTH) {
     return "Файл аватарки слишком большой — выберите фото поменьше";
   }

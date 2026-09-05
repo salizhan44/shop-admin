@@ -12,45 +12,65 @@ export function OPTIONS() {
 }
 
 export async function GET(request: Request) {
-  const customerId = await getCustomerIdFromRequest(request);
-  if (!customerId) {
-    return jsonWithCors({ error: "Нужен вход" } satisfies ApiErrorBody, {
-      status: 401,
-    });
-  }
+  try {
+    const customerId = await getCustomerIdFromRequest(request);
+    if (!customerId) {
+      return jsonWithCors({ error: "Нужен вход" } satisfies ApiErrorBody, {
+        status: 401,
+      });
+    }
 
-  const customer = await getCustomerProfile(customerId);
-  if (!customer) {
-    return jsonWithCors({ error: "Не найден" } satisfies ApiErrorBody, {
-      status: 404,
-    });
-  }
+    const customer = await getCustomerProfile(customerId);
+    if (!customer) {
+      return jsonWithCors({ error: "Не найден" } satisfies ApiErrorBody, {
+        status: 404,
+      });
+    }
 
-  return jsonWithCors({ customer });
+    return jsonWithCors({ customer });
+  } catch {
+    return jsonWithCors(
+      {
+        error:
+          "Не удалось загрузить профиль. Перезапустите сайт (admin) и войдите снова.",
+      } satisfies ApiErrorBody,
+      { status: 500 },
+    );
+  }
 }
 
 export async function PATCH(request: Request) {
-  const customerId = await getCustomerIdFromRequest(request);
-  if (!customerId) {
-    return jsonWithCors({ error: "Нужен вход" } satisfies ApiErrorBody, {
-      status: 401,
-    });
-  }
+  try {
+    const customerId = await getCustomerIdFromRequest(request);
+    if (!customerId) {
+      return jsonWithCors({ error: "Нужен вход" } satisfies ApiErrorBody, {
+        status: 401,
+      });
+    }
 
-  const json: unknown = await request.json().catch(() => null);
-  if (!isCustomerProfileUpdateBody(json)) {
+    const json: unknown = await request.json().catch(() => null);
+    if (!isCustomerProfileUpdateBody(json)) {
+      return jsonWithCors(
+        { error: "Некорректные данные" } satisfies ApiErrorBody,
+        { status: 400 },
+      );
+    }
+
+    const result = await updateCustomerProfile(customerId, json);
+    if ("error" in result) {
+      return jsonWithCors({ error: result.error } satisfies ApiErrorBody, {
+        status: 400,
+      });
+    }
+
+    return jsonWithCors({ customer: result.customer });
+  } catch {
     return jsonWithCors(
-      { error: "Некорректные данные" } satisfies ApiErrorBody,
-      { status: 400 },
+      {
+        error:
+          "Не удалось сохранить профиль. Перезапустите сайт (admin) и попробуйте снова.",
+      } satisfies ApiErrorBody,
+      { status: 500 },
     );
   }
-
-  const result = await updateCustomerProfile(customerId, json);
-  if ("error" in result) {
-    return jsonWithCors({ error: result.error } satisfies ApiErrorBody, {
-      status: 400,
-    });
-  }
-
-  return jsonWithCors({ customer: result.customer });
 }
