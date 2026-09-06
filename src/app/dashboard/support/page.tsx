@@ -35,6 +35,19 @@ function TicketCard(props: { ticket: SupportTicketStaffPublic }) {
       <p className="mt-3 whitespace-pre-wrap text-sm text-zinc-700">
         {ticket.body}
       </p>
+      {ticket.imageUrls.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {ticket.imageUrls.map((url) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={url}
+              src={url}
+              alt=""
+              className="h-24 w-24 rounded-lg object-contain ring-1 ring-zinc-200"
+            />
+          ))}
+        </div>
+      ) : null}
       {ticket.staffReply ? (
         <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">
           Ответ: {ticket.staffReply}

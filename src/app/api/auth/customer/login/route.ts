@@ -37,6 +37,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!customer.passwordHash) {
+    return jsonWithCors(
+      { error: "Этот аккаунт входит через Google" } satisfies ApiErrorBody,
+      { status: 401 },
+    );
+  }
+
   const matches = await verifyPassword(json.password, customer.passwordHash);
   if (!matches) {
     return jsonWithCors(

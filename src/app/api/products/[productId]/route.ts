@@ -1,28 +1,21 @@
-import { jsonWithCors, corsPreflight } from "@/lib/api-cors.server";
 import { getStaffSession } from "@/lib/staff-session.server";
 import { canManageCatalog } from "@/lib/roles.shared";
 import {
-  createCatalogProduct,
-  isCreateProductError,
-  listActiveProducts,
+  deactivateCatalogProduct,
+  isProductError,
+  updateCatalogProduct,
 } from "@/lib/products.server";
 import {
   isProductCreateBody,
   parsePriceToCents,
   parseStockQuantity,
 } from "@/lib/products.shared";
-import type { ApiErrorBody, ProductPublic } from "@/lib/auth.shared";
+import type { ApiErrorBody } from "@/lib/auth.shared";
 
-export function OPTIONS() {
-  return corsPreflight();
-}
-
-export async function GET() {
-  const products = await listActiveProducts();
-  return jsonWithCors({ products } satisfies { products: ProductPublic[] });
-}
-
-export async function POST(request: Request) {
+export async function PATCH(
+  request: Request,
+  context: { params: Promise<{ productId: string }> },
+) {
   const session = await getStaffSession();
   if (!session) {
     return Response.json(
@@ -59,7 +52,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const product = await createCatalogProduct({
+  const { productId } = await context.params;
+  const result = await updateCatalogProduct(productId, {
     name,
     description,
     priceCents,
@@ -70,11 +64,42 @@ export async function POST(request: Request) {
     subcategoryName: json.subcategoryName,
     imageUrl: json.imageUrl,
   });
-  if (isCreateProductError(product)) {
+  if (isProductError(result)) {
     return Response.json(
-      { error: product.error } satisfies ApiErrorBody,
-      { status: 400 },
+      { error: result.error } satisfies ApiErrorBody,
+      { status: result.status },
     );
   }
-  return Response.json({ product }, { status: 201 });
+
+  return Response.json({ product: result });
+}
+
+export async function DELETE(
+  _request: Request,
+  context: { params: Promise<{ productId: string }> },
+) {
+  const session = await getStaffSession();
+  if (!session) {
+    return Response.json(
+      { error: "Нужно войти как сотрудник" } satisfies ApiErrorBody,
+      { status: 401 },
+    );
+  }
+  if (!canManageCatalog(session.role)) {
+    return Response.json(
+      { error: "Недостаточно прав для ассортимента" } satisfies ApiErrorBody,
+      { status: 403 },
+    );
+  }
+
+  const { productId } = await context.params;
+  const result = await deactivateCatalogProduct(productId);
+  if (isProductError(result)) {
+    return Response.json(
+      { error: result.error } satisfies ApiErrorBody,
+      { status: result.status },
+    );
+  }
+
+  return Response.json({ product: result });
 }

@@ -78,7 +78,7 @@ export function StockAdjust(props: {
   }, [stockQuantity, props.productId, router]);
 
   return (
-    <div className="mt-2 flex flex-col gap-1">
+    <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1 text-sm text-zinc-800">
         Остаток на складе
         <input

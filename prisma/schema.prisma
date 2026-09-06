@@ -38,7 +38,9 @@ enum SupportTicketStatus {
 model Customer {
   id            String          @id @default(cuid())
   email         String          @unique
-  passwordHash  String
+  /** null — аккаунт только через Google. */
+  passwordHash  String?
+  googleId      String?         @unique
   name          String
   homeAddress   String          @default("")
   avatarUrl     String          @default("")
@@ -62,16 +64,46 @@ model RefreshToken {
 }
 
 model Product {
-  id            String      @id @default(cuid())
-  name          String
-  description   String      @default("")
-  priceCents    Int
-  stockQuantity Int         @default(0)
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
+  id             String       @id @default(cuid())
+  name           String
+  description    String       @default("")
+  priceCents     Int
+  stockQuantity  Int          @default(0)
+  isActive       Boolean      @default(true)
+  imageUrl       String       @default("")
+  categoryId     String?
+  category       Category?    @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  subcategoryId  String?
+  subcategory    Subcategory? @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+
+  @@index([categoryId])
+  @@index([subcategoryId])
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  subcategories Subcategory[]
+  products      Product[]
+}
+
+model Subcategory {
+  id         String   @id @default(cuid())
+  name       String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  products   Product[]
+
+  @@unique([categoryId, name])
+  @@index([categoryId])
 }
 
 model Order {
@@ -135,6 +167,7 @@ model SupportTicket {
   customer   Customer             @relation(fields: [customerId], references: [id], onDelete: Restrict)
   subject    String
   body       String
+  imageUrls  String[]             @default([])
   status     SupportTicketStatus  @default(OPEN)
   staffReply String?
   createdAt  DateTime             @default(now())

@@ -41,6 +41,9 @@ export type ProductPublic = {
   name: string;
   description: string;
   priceCents: number;
+  imageUrl: string;
+  categoryId: string | null;
+  subcategoryId: string | null;
 };
 
 export type ProductCreateBody = {
@@ -48,6 +51,17 @@ export type ProductCreateBody = {
   description: string;
   priceSom: string;
   stockQuantity: string;
+  /** Существующая категория, либо пустая строка. */
+  categoryId?: string;
+  /** Название новой категории (если categoryId пуст). */
+  categoryName?: string;
+  subcategoryId?: string;
+  subcategoryName?: string;
+  /**
+   * Пустая строка — без фото / убрать фото.
+   * data:image… — новое фото; /uploads/products/… — оставить текущее.
+   */
+  imageUrl?: string;
 };
 
 export type ApiErrorBody = {

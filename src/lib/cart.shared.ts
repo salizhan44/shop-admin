@@ -6,6 +6,7 @@ export type CartLinePublic = {
   name: string;
   description: string;
   priceCents: number;
+  imageUrl: string;
   quantity: number;
   lineTotalCents: number;
 };
@@ -42,7 +43,10 @@ export function isUpdateCartItemBody(value: unknown): value is UpdateCartItemBod
 export function toCartLine(input: {
   id: string;
   quantity: number;
-  product: ProductPublic;
+  product: Pick<
+    ProductPublic,
+    "id" | "name" | "description" | "priceCents" | "imageUrl"
+  >;
 }): CartLinePublic {
   return {
     id: input.id,
@@ -50,6 +54,7 @@ export function toCartLine(input: {
     name: input.product.name,
     description: input.product.description,
     priceCents: input.product.priceCents,
+    imageUrl: input.product.imageUrl,
     quantity: input.quantity,
     lineTotalCents: input.product.priceCents * input.quantity,
   };

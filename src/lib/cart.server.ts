@@ -19,6 +19,7 @@ export async function getCartForCustomer(customerId: string): Promise<CartPublic
               name: true,
               description: true,
               priceCents: true,
+              imageUrl: true,
             },
           },
         },
