@@ -1,5 +1,14 @@
 import { prisma } from "./prisma.server";
 import {
+  consumePromoInTransaction,
+  isPromoError,
+} from "./promo.server";
+import {
+  notifyOrderConfirmed,
+  notifyOrderCreated,
+  notifyOrderRejected,
+} from "./push.server";
+import {
   toOrderPublic,
   toOrderStaffPublic,
   type OrderPublic,
@@ -9,6 +18,16 @@ import {
 const orderInclude = {
   items: true,
 } as const;
+
+class PromoCheckoutError extends Error {
+  readonly promoStatus: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "PromoCheckoutError";
+    this.promoStatus = status;
+  }
+}
 
 export async function listOrdersForStaff(): Promise<OrderStaffPublic[]> {
   const orders = await prisma.order.findMany({
@@ -31,6 +50,8 @@ export async function listOrdersForStaff(): Promise<OrderStaffPublic[]> {
       id: order.id,
       status: order.status,
       totalCents: order.totalCents,
+      discountCents: order.discountCents,
+      promoCodeText: order.promoCodeText,
       phone: order.phone,
       address: order.address,
       comment: order.comment,
@@ -116,7 +137,11 @@ export async function confirmOrder(
         include: orderInclude,
       });
     });
-    return toOrderPublic(updated);
+    const publicOrder = toOrderPublic(updated);
+    void notifyOrderConfirmed(updated.customerId, updated.id).catch((error) => {
+      console.error("[push] confirm notify failed", error);
+    });
+    return publicOrder;
   } catch {
     return { error: "Не удалось подтвердить заказ", status: 500 };
   }
@@ -147,7 +172,13 @@ export async function rejectOrder(
     },
     include: orderInclude,
   });
-  return toOrderPublic(updated);
+  const publicOrder = toOrderPublic(updated);
+  void notifyOrderRejected(updated.customerId, updated.id, trimmed).catch(
+    (error) => {
+      console.error("[push] reject notify failed", error);
+    },
+  );
+  return publicOrder;
 }
 
 export async function createOrderFromCart(
@@ -156,6 +187,7 @@ export async function createOrderFromCart(
     phone: string;
     address: string;
     comment: string | null;
+    promoCode?: string;
   },
 ): Promise<OrderPublic | { error: string; status: number }> {
   const cart = await prisma.cart.findUnique({
@@ -197,31 +229,78 @@ export async function createOrderFromCart(
     quantity: item.quantity,
     lineTotalCents: item.product.priceCents * item.quantity,
   }));
-  const totalCents = lineInputs.reduce(
+  const subtotalCents = lineInputs.reduce(
     (sum, item) => sum + item.lineTotalCents,
     0,
   );
+  const requestedCode = delivery.promoCode?.trim() ?? "";
 
-  const order = await prisma.$transaction(async (tx) => {
-    const created = await tx.order.create({
-      data: {
-        customerId,
-        status: "PENDING",
-        totalCents,
-        phone: delivery.phone,
-        address: delivery.address,
-        comment: delivery.comment,
-        items: {
-          create: lineInputs,
+  try {
+    const order = await prisma.$transaction(async (tx) => {
+      let discountCents = 0;
+      let promoCodeId: string | null = null;
+      let promoCodeText = "";
+      const itemsToCreate = [...lineInputs];
+
+      if (requestedCode) {
+        const consumed = await consumePromoInTransaction(tx, {
+          customerId,
+          code: requestedCode,
+          subtotalCents,
+        });
+        if (isPromoError(consumed)) {
+          throw new PromoCheckoutError(consumed.error, consumed.status);
+        }
+        discountCents = consumed.discountCents;
+        promoCodeId = consumed.promoId;
+        promoCodeText = consumed.code;
+        if (consumed.giftLine) {
+          itemsToCreate.push(consumed.giftLine);
+        }
+      }
+
+      const created = await tx.order.create({
+        data: {
+          customerId,
+          status: "PENDING",
+          totalCents: Math.max(0, subtotalCents - discountCents),
+          discountCents,
+          promoCodeId,
+          promoCodeText,
+          phone: delivery.phone,
+          address: delivery.address,
+          comment: delivery.comment,
+          items: {
+            create: itemsToCreate,
+          },
         },
-      },
-      include: { items: true },
+        include: { items: true },
+      });
+      if (promoCodeId) {
+        await tx.promoRedemption.create({
+          data: {
+            promoCodeId,
+            customerId,
+            orderId: created.id,
+            discountCents,
+          },
+        });
+      }
+      await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+      return created;
     });
-    await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
-    return created;
-  });
 
-  return toOrderPublic(order);
+    const publicOrder = toOrderPublic(order);
+    void notifyOrderCreated(customerId, order.id).catch((error) => {
+      console.error("[push] create notify failed", error);
+    });
+    return publicOrder;
+  } catch (caught) {
+    if (caught instanceof PromoCheckoutError) {
+      return { error: caught.message, status: caught.promoStatus };
+    }
+    throw caught;
+  }
 }
 
 export function isOrderError(

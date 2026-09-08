@@ -13,6 +13,7 @@ export const WAREHOUSE_ROLES: readonly StaffRole[] = ["OWNER", "WAREHOUSE"];
 export const SUPPORT_ROLES: readonly StaffRole[] = ["OWNER", "SUPPORT"];
 export const CATALOG_ROLES: readonly StaffRole[] = ["OWNER"];
 export const STAFF_MANAGEMENT_ROLES: readonly StaffRole[] = ["OWNER"];
+export const PROMOTION_ROLES: readonly StaffRole[] = ["OWNER"];
 
 export const ASSIGNABLE_STAFF_ROLES = [
   "WAREHOUSE",
@@ -44,6 +45,10 @@ export function canManageCatalog(role: StaffRole): boolean {
 
 export function canManageStaff(role: StaffRole): boolean {
   return STAFF_MANAGEMENT_ROLES.includes(role);
+}
+
+export function canManagePromotions(role: StaffRole): boolean {
+  return PROMOTION_ROLES.includes(role);
 }
 
 export function isAssignableStaffRole(value: string): value is AssignableStaffRole {

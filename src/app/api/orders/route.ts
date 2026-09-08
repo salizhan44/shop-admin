@@ -78,6 +78,7 @@ export async function POST(request: Request) {
     phone,
     address,
     comment,
+    promoCode: json.promoCode,
   });
   if (isOrderError(result)) {
     return jsonWithCors(

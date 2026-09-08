@@ -68,6 +68,14 @@ function OrderCard(props: { order: OrderStaffPublic }) {
       <p className="mt-2 text-sm font-medium">
         Итого: {formatPriceSomLabel(order.totalCents)}
       </p>
+      {order.promoCode ? (
+        <p className="text-sm text-zinc-600">
+          Промокод {order.promoCode}
+          {order.discountCents > 0
+            ? ` · скидка ${formatPriceSomLabel(order.discountCents)}`
+            : ""}
+        </p>
+      ) : null}
       {order.rejectionReason ? (
         <p className="mt-2 text-sm text-red-700">
           Причина отклонения: {order.rejectionReason}

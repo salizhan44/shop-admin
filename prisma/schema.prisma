@@ -35,6 +35,13 @@ enum SupportTicketStatus {
   CLOSED
 }
 
+enum PromoCodeKind {
+  PERCENT
+  AMOUNT
+  FREE_DELIVERY
+  FREE_PRODUCT
+}
+
 model Customer {
   id            String          @id @default(cuid())
   email         String          @unique
@@ -50,6 +57,21 @@ model Customer {
   cart          Cart?
   orders        Order[]
   supportTickets SupportTicket[]
+  pushTokens    CustomerPushToken[]
+  promoRedemptions PromoRedemption[]
+}
+
+/** FCM / Expo push-токен устройства клиента. */
+model CustomerPushToken {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  platform   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([customerId])
 }
 
 model RefreshToken {
@@ -79,6 +101,7 @@ model Product {
   updatedAt      DateTime     @updatedAt
   cartItems      CartItem[]
   orderItems     OrderItem[]
+  giftPromoCodes PromoCode[]
 
   @@index([categoryId])
   @@index([subcategoryId])
@@ -112,16 +135,22 @@ model Order {
   customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
   status          OrderStatus @default(PENDING)
   totalCents      Int
+  discountCents   Int         @default(0)
+  promoCodeId     String?
+  promoCode       PromoCode?  @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  promoCodeText   String      @default("")
   phone           String      @default("")
   address         String      @default("")
   comment         String?
   rejectionReason String?
   items           OrderItem[]
+  promoRedemption PromoRedemption?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
   @@index([customerId])
   @@index([status])
+  @@index([promoCodeId])
 }
 
 model OrderItem {
@@ -159,6 +188,42 @@ model CartItem {
   updatedAt DateTime @updatedAt
 
   @@unique([cartId, productId])
+}
+
+model PromoCode {
+  id                  String        @id @default(cuid())
+  code                String        @unique
+  kind                PromoCodeKind
+  percentOff          Int?
+  amountOffCents      Int?
+  freeProductId       String?
+  freeProduct         Product?      @relation(fields: [freeProductId], references: [id], onDelete: SetNull)
+  maxTotalRedemptions Int?
+  maxPerCustomer      Int           @default(1)
+  redemptionCount     Int           @default(0)
+  isActive            Boolean       @default(true)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  redemptions         PromoRedemption[]
+  orders              Order[]
+
+  @@index([isActive])
+  @@index([freeProductId])
+}
+
+model PromoRedemption {
+  id            String    @id @default(cuid())
+  promoCodeId   String
+  promoCode     PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Restrict)
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  orderId       String    @unique
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  discountCents Int
+  createdAt     DateTime  @default(now())
+
+  @@index([promoCodeId])
+  @@index([customerId])
 }
 
 model SupportTicket {

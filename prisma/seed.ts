@@ -144,6 +144,25 @@ async function seedProducts() {
   }
 }
 
+async function ensureQuickCategories() {
+  const existing = await prisma.category.findMany();
+  for (const name of ["МУКА", "МАКАРОНЫ", "ЛАПША"] as const) {
+    const found = existing.find(
+      (category) => category.name.trim().toLowerCase() === name.toLowerCase(),
+    );
+    if (found) {
+      if (found.name !== name) {
+        await prisma.category.update({
+          where: { id: found.id },
+          data: { name },
+        });
+      }
+      continue;
+    }
+    await prisma.category.create({ data: { name } });
+  }
+}
+
 async function main() {
   const email = process.env.STAFF_SEED_EMAIL ?? "owner@local.test";
   const password = process.env.STAFF_SEED_PASSWORD ?? "changeme";
@@ -161,6 +180,32 @@ async function main() {
   });
 
   await seedProducts();
+  await ensureQuickCategories();
+  await ensurePromoCodes();
+}
+
+async function ensurePromoCodes() {
+  await prisma.promoCode.upsert({
+    where: { code: "ROLA10" },
+    update: {},
+    create: {
+      code: "ROLA10",
+      kind: "PERCENT",
+      percentOff: 10,
+      maxPerCustomer: 1,
+    },
+  });
+  await prisma.promoCode.upsert({
+    where: { code: "FIRST100" },
+    update: {},
+    create: {
+      code: "FIRST100",
+      kind: "AMOUNT",
+      amountOffCents: 20000,
+      maxTotalRedemptions: 100,
+      maxPerCustomer: 1,
+    },
+  });
 }
 
 main()

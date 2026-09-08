@@ -4,6 +4,7 @@ import {
   canAccessSupport,
   canAccessWarehouse,
   canManageCatalog,
+  canManagePromotions,
   canManageStaff,
   type StaffRole,
 } from "./roles.shared";
@@ -38,6 +39,11 @@ const ALL_NAV_ITEMS: Array<
     href: "/dashboard/products",
     label: "Ассортимент",
     visible: canManageCatalog,
+  },
+  {
+    href: "/dashboard/promo",
+    label: "Промокоды",
+    visible: canManagePromotions,
   },
   {
     href: "/dashboard/staff",
