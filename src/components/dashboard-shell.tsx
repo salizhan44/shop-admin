@@ -146,7 +146,7 @@ export function DashboardShell(props: {
         </header>
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto w-full max-w-5xl">{props.children}</div>
+          <div className="mx-auto w-full">{props.children}</div>
         </main>
       </div>
     </div>

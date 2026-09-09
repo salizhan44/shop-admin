@@ -200,6 +200,7 @@ export async function createOrderFromCart(
               id: true,
               name: true,
               priceCents: true,
+              costCents: true,
               isActive: true,
             },
           },
@@ -226,6 +227,7 @@ export async function createOrderFromCart(
     productId: item.product.id,
     productName: item.product.name,
     priceCents: item.product.priceCents,
+    unitCostCents: item.product.costCents,
     quantity: item.quantity,
     lineTotalCents: item.product.priceCents * item.quantity,
   }));

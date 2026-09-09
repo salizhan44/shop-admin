@@ -3,6 +3,7 @@ import {
   canAccessAnalytics,
   canAccessSupport,
   canAccessWarehouse,
+  canViewWarehouseStockPage,
   canManageCatalog,
   canManagePromotions,
   canManageStaff,
@@ -32,8 +33,8 @@ const ALL_NAV_ITEMS: Array<
   },
   {
     href: "/dashboard/stock",
-    label: "Остатки",
-    visible: canAccessWarehouse,
+    label: "Склад",
+    visible: canViewWarehouseStockPage,
   },
   {
     href: "/dashboard/products",

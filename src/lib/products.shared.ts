@@ -3,6 +3,7 @@ import type { ProductCreateBody, ProductPublic } from "./auth.shared";
 export type ProductAdmin = ProductPublic & {
   isActive: boolean;
   stockQuantity: number;
+  costCents: number;
   categoryId: string | null;
   categoryName: string | null;
   subcategoryId: string | null;
@@ -16,7 +17,19 @@ export type ProductStockBody = {
 export type ProductWarehousePublic = {
   id: string;
   name: string;
+  priceCents: number;
   stockQuantity: number;
+  imageUrl: string;
+  categoryName: string | null;
+};
+
+export type WarehouseSnapshot = {
+  productCount: number;
+  totalUnits: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  retailValueCents: number;
+  products: ProductWarehousePublic[];
 };
 
 export type CategoryOptionPublic = {
@@ -36,6 +49,7 @@ export function isProductCreateBody(value: unknown): value is ProductCreateBody 
     typeof body.name !== "string" ||
     typeof body.description !== "string" ||
     typeof body.priceSom !== "string" ||
+    typeof body.costSom !== "string" ||
     typeof body.stockQuantity !== "string"
   ) {
     return false;
@@ -96,6 +110,83 @@ export function parsePriceToCents(priceSom: string): number | null {
     return null;
   }
   return cents;
+}
+
+/** Себестоимость: 0 и больше. */
+export function parseCostToCents(costSom: string): number | null {
+  const normalized = costSom.trim().replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(normalized)) {
+    return null;
+  }
+  const cents = Math.round(Number(normalized) * 100);
+  if (!Number.isFinite(cents) || cents < 0) {
+    return null;
+  }
+  return cents;
+}
+
+export const UNCATEGORIZED_WAREHOUSE_LABEL = "Без категории";
+
+export type WarehouseCategoryGroup = {
+  name: string;
+  products: ProductWarehousePublic[];
+  totalUnits: number;
+};
+
+export function groupWarehouseProductsByCategory(
+  products: ProductWarehousePublic[],
+): WarehouseCategoryGroup[] {
+  const byName = new Map<string, ProductWarehousePublic[]>();
+  for (const product of products) {
+    const name = product.categoryName?.trim() || UNCATEGORIZED_WAREHOUSE_LABEL;
+    const current = byName.get(name) ?? [];
+    current.push(product);
+    byName.set(name, current);
+  }
+
+  return [...byName.entries()]
+    .map(([name, grouped]) => ({
+      name,
+      products: grouped,
+      totalUnits: grouped.reduce((sum, product) => sum + product.stockQuantity, 0),
+    }))
+    .sort((left, right) => {
+      if (left.name === UNCATEGORIZED_WAREHOUSE_LABEL) {
+        return 1;
+      }
+      if (right.name === UNCATEGORIZED_WAREHOUSE_LABEL) {
+        return -1;
+      }
+      return left.name.localeCompare(right.name, "ru");
+    });
+}
+
+export function toWarehouseSnapshot(
+  products: ProductWarehousePublic[],
+  lowStockThreshold: number,
+): WarehouseSnapshot {
+  return {
+    productCount: products.length,
+    totalUnits: products.reduce((sum, product) => sum + product.stockQuantity, 0),
+    lowStockCount: products.filter(
+      (product) =>
+        product.stockQuantity > 0 && product.stockQuantity <= lowStockThreshold,
+    ).length,
+    outOfStockCount: products.filter((product) => product.stockQuantity === 0)
+      .length,
+    retailValueCents: products.reduce(
+      (sum, product) => sum + product.priceCents * product.stockQuantity,
+      0,
+    ),
+    products,
+  };
+}
+
+export function formatSignedSomLabel(cents: number): string {
+  if (cents < 0) {
+    return `−${formatPriceSomLabel(Math.abs(cents))}`;
+  }
+  return formatPriceSomLabel(cents);
 }
 
 export function parseStockQuantity(value: string): number | null {

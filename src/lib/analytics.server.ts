@@ -1,7 +1,10 @@
 import { prisma } from "./prisma.server";
 import {
   aggregateDailySales,
-  toProductSalesRow,
+  aggregateProductSales,
+  fillDailySalesRange,
+  sumLineCostCents,
+  toReportDateKey,
   toSalesSummary,
   type DailySalesRow,
   type ProductSalesRow,
@@ -9,7 +12,7 @@ import {
 } from "./analytics.shared";
 
 export async function getSalesSummary(): Promise<SalesSummary> {
-  const [confirmed, pending, rejected] = await Promise.all([
+  const [confirmed, pending, rejected, confirmedItems] = await Promise.all([
     prisma.order.aggregate({
       where: { status: "CONFIRMED" },
       _sum: { totalCents: true },
@@ -24,34 +27,39 @@ export async function getSalesSummary(): Promise<SalesSummary> {
       where: { status: "REJECTED" },
       _count: true,
     }),
+    prisma.orderItem.findMany({
+      where: { order: { status: "CONFIRMED" } },
+      select: { quantity: true, unitCostCents: true },
+    }),
   ]);
 
   return toSalesSummary({
     confirmedOrderCount: confirmed._count,
     confirmedRevenueCents: confirmed._sum.totalCents ?? 0,
+    confirmedCostCents: sumLineCostCents(confirmedItems),
     pendingOrderCount: pending._count,
     pendingTotalCents: pending._sum.totalCents ?? 0,
     rejectedOrderCount: rejected._count,
   });
 }
 
-export async function getTopProducts(limit: number): Promise<ProductSalesRow[]> {
-  const rows = await prisma.orderItem.groupBy({
-    by: ["productId", "productName"],
+export async function getProductProfitRanks(): Promise<ProductSalesRow[]> {
+  const items = await prisma.orderItem.findMany({
     where: { order: { status: "CONFIRMED" } },
-    _sum: { quantity: true, lineTotalCents: true },
-    orderBy: { _sum: { lineTotalCents: "desc" } },
-    take: limit,
+    select: {
+      productId: true,
+      productName: true,
+      quantity: true,
+      lineTotalCents: true,
+      unitCostCents: true,
+    },
   });
 
-  return rows.map((row) =>
-    toProductSalesRow({
-      productId: row.productId,
-      productName: row.productName,
-      quantitySold: row._sum.quantity ?? 0,
-      revenueCents: row._sum.lineTotalCents ?? 0,
-    }),
-  );
+  return aggregateProductSales(items);
+}
+
+export async function getTopProducts(limit: number): Promise<ProductSalesRow[]> {
+  return (await getProductProfitRanks()).slice(0, limit);
 }
 
 export async function getDailySales(days: number): Promise<DailySalesRow[]> {
@@ -64,14 +72,21 @@ export async function getDailySales(days: number): Promise<DailySalesRow[]> {
       status: "CONFIRMED",
       createdAt: { gte: since },
     },
-    select: { createdAt: true, totalCents: true },
+    select: {
+      createdAt: true,
+      totalCents: true,
+      items: { select: { quantity: true, unitCostCents: true } },
+    },
     orderBy: { createdAt: "asc" },
   });
 
-  return aggregateDailySales(
+  const aggregated = aggregateDailySales(
     orders.map((order) => ({
-      createdAt: order.createdAt.toISOString(),
+      createdAt: toReportDateKey(order.createdAt),
       totalCents: order.totalCents,
+      costCents: sumLineCostCents(order.items),
     })),
   );
+
+  return fillDailySalesRange(aggregated, days);
 }

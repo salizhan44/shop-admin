@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getStaffSession } from "@/lib/staff-session.server";
 import {
   canAccessAccounting,
+  canAccessAnalytics,
   canAccessSupport,
   canAccessWarehouse,
   canManageCatalog,
@@ -93,7 +94,13 @@ export default async function DashboardPage() {
             label="Мало на складе"
             value={String(lowStock.length)}
             hint={`Остаток ≤ ${LOW_STOCK_THRESHOLD} шт.`}
-            href={showCatalog ? "/dashboard/products" : "/dashboard/stock"}
+            href={
+              canAccessAnalytics(session.role)
+                ? "/dashboard/analytics"
+                : showCatalog
+                  ? "/dashboard/products"
+                  : "/dashboard/stock"
+            }
           />
         ) : null}
         {showAccounting ? (

@@ -90,6 +90,8 @@ model Product {
   name           String
   description    String       @default("")
   priceCents     Int
+  /** Закупочная себестоимость единицы, в тыйынах. */
+  costCents      Int          @default(0)
   stockQuantity  Int          @default(0)
   isActive       Boolean      @default(true)
   imageUrl       String       @default("")
@@ -161,6 +163,8 @@ model OrderItem {
   product        Product @relation(fields: [productId], references: [id], onDelete: Restrict)
   productName    String
   priceCents     Int
+  /** Себестоимость единицы на момент заказа, в тыйынах. */
+  unitCostCents  Int     @default(0)
   quantity       Int
   lineTotalCents Int
   createdAt      DateTime @default(now())

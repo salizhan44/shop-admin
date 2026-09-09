@@ -21,6 +21,7 @@ export type CartLineForPromo = {
   productId: string;
   productName: string;
   priceCents: number;
+  unitCostCents: number;
   quantity: number;
   lineTotalCents: number;
 };
@@ -137,7 +138,7 @@ async function loadUsablePromo(code: string) {
     where: { code },
     include: {
       freeProduct: {
-        select: { id: true, name: true, priceCents: true, isActive: true },
+        select: { id: true, name: true, priceCents: true, costCents: true, isActive: true },
       },
     },
   });
@@ -160,6 +161,7 @@ function buildPlan(
       productId: product.id,
       productName: product.name,
       priceCents: 0,
+      unitCostCents: product.costCents,
       quantity: 1,
       lineTotalCents: 0,
     };
@@ -240,7 +242,7 @@ export async function consumePromoInTransaction(
     where: { code },
     include: {
       freeProduct: {
-        select: { id: true, name: true, priceCents: true, isActive: true },
+        select: { id: true, name: true, priceCents: true, costCents: true, isActive: true },
       },
     },
   });

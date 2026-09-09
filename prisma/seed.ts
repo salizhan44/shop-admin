@@ -1,5 +1,7 @@
 import { PrismaClient, StaffRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { groceryCostCents, ensureGroceryProducts } from "./seed-grocery";
+import { ensureDemoOrders } from "./seed-demo-orders";
 
 const prisma = new PrismaClient();
 
@@ -81,7 +83,7 @@ function randomPriceCents(): number {
 }
 
 function randomStockQuantity(): number {
-  return randomInt(3, 8);
+  return randomInt(20, 80);
 }
 
 function buildCatalogProductName(productNumber: number, category: string): string {
@@ -107,12 +109,6 @@ function generateCatalogProducts(): CatalogProductSeed[] {
 
 async function seedProducts() {
   const catalogProducts = generateCatalogProducts();
-  const catalogNames = new Set(catalogProducts.map((item) => item.name));
-
-  await prisma.product.updateMany({
-    where: { name: { notIn: [...catalogNames] } },
-    data: { isActive: false },
-  });
 
   for (const item of catalogProducts) {
     const existing = await prisma.product.findFirst({
@@ -123,10 +119,10 @@ async function seedProducts() {
       await prisma.product.update({
         where: { id: existing.id },
         data: {
-          description: item.description,
-          priceCents: item.priceCents,
-          stockQuantity: item.stockQuantity,
           isActive: true,
+          ...(existing.costCents === 0
+            ? { costCents: groceryCostCents(existing.priceCents, existing.name) }
+            : {}),
         },
       });
       continue;
@@ -137,6 +133,7 @@ async function seedProducts() {
         name: item.name,
         description: item.description,
         priceCents: item.priceCents,
+        costCents: groceryCostCents(item.priceCents, item.name),
         stockQuantity: item.stockQuantity,
         isActive: true,
       },
@@ -163,6 +160,35 @@ async function ensureQuickCategories() {
   }
 }
 
+async function backfillOrderItemCosts() {
+  const items = await prisma.orderItem.findMany({
+    where: { unitCostCents: 0 },
+    select: { id: true, product: { select: { costCents: true } } },
+  });
+  for (const item of items) {
+    if (item.product.costCents <= 0) {
+      continue;
+    }
+    await prisma.orderItem.update({
+      where: { id: item.id },
+      data: { unitCostCents: item.product.costCents },
+    });
+  }
+}
+
+async function ensureMissingCosts() {
+  const rows = await prisma.product.findMany({
+    where: { costCents: 0 },
+    select: { id: true, name: true, priceCents: true },
+  });
+  for (const row of rows) {
+    await prisma.product.update({
+      where: { id: row.id },
+      data: { costCents: groceryCostCents(row.priceCents, row.name) },
+    });
+  }
+}
+
 async function main() {
   const email = process.env.STAFF_SEED_EMAIL ?? "owner@local.test";
   const password = process.env.STAFF_SEED_PASSWORD ?? "changeme";
@@ -181,7 +207,11 @@ async function main() {
 
   await seedProducts();
   await ensureQuickCategories();
+  await ensureGroceryProducts(prisma);
+  await ensureMissingCosts();
+  await backfillOrderItemCosts();
   await ensurePromoCodes();
+  await ensureDemoOrders(prisma);
 }
 
 async function ensurePromoCodes() {

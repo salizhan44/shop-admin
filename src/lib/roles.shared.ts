@@ -35,6 +35,11 @@ export function canAccessWarehouse(role: StaffRole): boolean {
   return WAREHOUSE_ROLES.includes(role);
 }
 
+/** Отдельная страница склада — только кладовщик. Владелец смотрит склад в аналитике. */
+export function canViewWarehouseStockPage(role: StaffRole): boolean {
+  return role === "WAREHOUSE";
+}
+
 export function canAccessSupport(role: StaffRole): boolean {
   return SUPPORT_ROLES.includes(role);
 }

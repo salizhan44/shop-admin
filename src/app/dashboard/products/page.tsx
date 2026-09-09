@@ -70,7 +70,8 @@ export default async function ProductsPage() {
                       </p>
                     ) : null}
                     <p className="text-sm text-zinc-600">
-                      {formatPriceSomLabel(product.priceCents)} · на складе{" "}
+                      {formatPriceSomLabel(product.priceCents)} · себест.{" "}
+                      {formatPriceSomLabel(product.costCents)} · на складе{" "}
                       {product.stockQuantity} шт.
                     </p>
                     {product.description ? (

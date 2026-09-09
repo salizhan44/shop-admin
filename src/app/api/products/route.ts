@@ -8,6 +8,7 @@ import {
 } from "@/lib/products.server";
 import {
   isProductCreateBody,
+  parseCostToCents,
   parsePriceToCents,
   parseStockQuantity,
 } from "@/lib/products.shared";
@@ -48,12 +49,18 @@ export async function POST(request: Request) {
   const name = json.name.trim();
   const description = json.description.trim();
   const priceCents = parsePriceToCents(json.priceSom);
+  const costCents = parseCostToCents(json.costSom);
   const stockQuantity = parseStockQuantity(json.stockQuantity);
-  if (!name || priceCents === null || stockQuantity === null) {
+  if (
+    !name ||
+    priceCents === null ||
+    costCents === null ||
+    stockQuantity === null
+  ) {
     return Response.json(
       {
         error:
-          "Название обязательно, цена — число больше 0, остаток — целое число от 0",
+          "Название обязательно, цена — число больше 0, себестоимость — число от 0, остаток — целое число от 0",
       } satisfies ApiErrorBody,
       { status: 400 },
     );
@@ -63,6 +70,7 @@ export async function POST(request: Request) {
     name,
     description,
     priceCents,
+    costCents,
     stockQuantity,
     categoryId: json.categoryId,
     categoryName: json.categoryName,

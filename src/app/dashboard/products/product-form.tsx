@@ -22,6 +22,7 @@ export function ProductForm(props: {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [priceSom, setPriceSom] = useState("");
+  const [costSom, setCostSom] = useState("0");
   const [stockQuantity, setStockQuantity] = useState("0");
   const [categoryChoice, setCategoryChoice] = useState(NONE);
   const [categoryName, setCategoryName] = useState("");
@@ -50,6 +51,7 @@ export function ProductForm(props: {
     setName(product.name);
     setDescription(product.description);
     setPriceSom(formatPriceSomInput(product.priceCents));
+    setCostSom(formatPriceSomInput(product.costCents));
     setStockQuantity(String(product.stockQuantity));
     setCategoryChoice(product.categoryId ?? NONE);
     setCategoryName("");
@@ -63,6 +65,7 @@ export function ProductForm(props: {
     setName("");
     setDescription("");
     setPriceSom("");
+    setCostSom("0");
     setStockQuantity("0");
     setCategoryChoice(NONE);
     setCategoryName("");
@@ -133,6 +136,7 @@ export function ProductForm(props: {
       name,
       description,
       priceSom,
+      costSom,
       stockQuantity,
       categoryId: creatingCategory ? "" : selectedCategoryId,
       categoryName: creatingCategory ? categoryName.trim() : "",
@@ -337,6 +341,17 @@ export function ProductForm(props: {
               placeholder="199.90"
               value={priceSom}
               onChange={(event) => setPriceSom(event.target.value)}
+              className={inputClass}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm text-zinc-700">
+            Себестоимость, сом
+            <input
+              required
+              inputMode="decimal"
+              placeholder="120"
+              value={costSom}
+              onChange={(event) => setCostSom(event.target.value)}
               className={inputClass}
             />
           </label>

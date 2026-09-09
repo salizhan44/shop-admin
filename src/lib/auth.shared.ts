@@ -50,6 +50,7 @@ export type ProductCreateBody = {
   name: string;
   description: string;
   priceSom: string;
+  costSom: string;
   stockQuantity: string;
   /** Существующая категория, либо пустая строка. */
   categoryId?: string;

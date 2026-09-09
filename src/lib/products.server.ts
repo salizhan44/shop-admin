@@ -21,6 +21,7 @@ const productAdminSelect = {
   name: true,
   description: true,
   priceCents: true,
+  costCents: true,
   isActive: true,
   stockQuantity: true,
   imageUrl: true,
@@ -45,6 +46,7 @@ function toProductAdmin(row: {
   name: string;
   description: string;
   priceCents: number;
+  costCents: number;
   isActive: boolean;
   stockQuantity: number;
   imageUrl: string;
@@ -58,6 +60,7 @@ function toProductAdmin(row: {
     name: row.name,
     description: row.description,
     priceCents: row.priceCents,
+    costCents: row.costCents,
     isActive: row.isActive,
     stockQuantity: row.stockQuantity,
     imageUrl: row.imageUrl,
@@ -174,15 +177,26 @@ export async function listCategoriesForCatalog(): Promise<
 }
 
 export async function listWarehouseProducts(): Promise<ProductWarehousePublic[]> {
-  return prisma.product.findMany({
+  const rows = await prisma.product.findMany({
     where: { isActive: true },
     orderBy: { name: "asc" },
     select: {
       id: true,
       name: true,
+      priceCents: true,
       stockQuantity: true,
+      imageUrl: true,
+      category: { select: { name: true } },
     },
   });
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    priceCents: row.priceCents,
+    stockQuantity: row.stockQuantity,
+    imageUrl: row.imageUrl,
+    categoryName: row.category?.name ?? null,
+  }));
 }
 
 async function resolveCategoryLinks(input: {
@@ -265,6 +279,7 @@ export async function createCatalogProduct(input: {
   name: string;
   description: string;
   priceCents: number;
+  costCents: number;
   stockQuantity: number;
   categoryId?: string;
   categoryName?: string;
@@ -282,6 +297,7 @@ export async function createCatalogProduct(input: {
       name: input.name,
       description: input.description,
       priceCents: input.priceCents,
+      costCents: input.costCents,
       stockQuantity: input.stockQuantity,
       isActive: true,
       imageUrl: "",
@@ -318,6 +334,7 @@ export async function updateCatalogProduct(
     name: string;
     description: string;
     priceCents: number;
+    costCents: number;
     stockQuantity: number;
     categoryId?: string;
     categoryName?: string;
@@ -354,6 +371,7 @@ export async function updateCatalogProduct(
       name: input.name,
       description: input.description,
       priceCents: input.priceCents,
+      costCents: input.costCents,
       stockQuantity: input.stockQuantity,
       categoryId: links.categoryId,
       subcategoryId: links.subcategoryId,
