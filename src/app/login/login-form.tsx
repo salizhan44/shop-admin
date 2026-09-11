@@ -4,6 +4,11 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { ApiErrorBody } from "@/lib/auth.shared";
 import { PasswordInput } from "@/components/password-input";
+import {
+  UI_INPUT_CLASS,
+  UI_LABEL_CLASS,
+  UI_PRIMARY_BUTTON_CLASS,
+} from "@/lib/ui.shared";
 
 export function LoginForm() {
   const router = useRouter();
@@ -40,8 +45,8 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex w-full flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm text-zinc-800">
+    <form onSubmit={onSubmit} className="flex w-full flex-col gap-4">
+      <label className={UI_LABEL_CLASS}>
         Email
         <input
           type="email"
@@ -49,10 +54,10 @@ export function LoginForm() {
           required
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-zinc-900 outline-none focus:border-zinc-500"
+          className={UI_INPUT_CLASS}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm text-zinc-800">
+      <label className={UI_LABEL_CLASS}>
         Пароль
         <PasswordInput
           value={password}
@@ -65,7 +70,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="mt-1 rounded-lg bg-zinc-900 px-3 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+        className={`mt-1 ${UI_PRIMARY_BUTTON_CLASS}`}
       >
         {pending ? "Входим…" : "Войти"}
       </button>

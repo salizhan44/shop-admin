@@ -9,6 +9,7 @@ const SAVE_DEBOUNCE_MS = 450;
 export function StockAdjust(props: {
   productId: string;
   initialStock: number;
+  hideLabel?: boolean;
 }) {
   const router = useRouter();
   const [stockQuantity, setStockQuantity] = useState(String(props.initialStock));
@@ -80,12 +81,14 @@ export function StockAdjust(props: {
   return (
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1 text-sm text-zinc-800">
-        Остаток на складе
+        <span className={props.hideLabel ? "sr-only" : undefined}>
+          Остаток на складе
+        </span>
         <input
           inputMode="numeric"
           value={stockQuantity}
           onChange={(event) => setStockQuantity(event.target.value)}
-          className="h-9 w-14 rounded border border-zinc-300 bg-white px-2 text-center text-sm"
+          className={`h-9 w-20 rounded-xl bg-white px-2 text-center text-sm shadow-sm ring-1 ring-zinc-200/80 outline-none focus:ring-2 focus:ring-zinc-400/40`}
         />
       </label>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}

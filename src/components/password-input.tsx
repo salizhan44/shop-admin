@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { UI_INPUT_CLASS, UI_SECONDARY_BUTTON_CLASS } from "@/lib/ui.shared";
 
 export function PasswordInput(props: {
   value: string;
@@ -18,12 +19,12 @@ export function PasswordInput(props: {
         required={props.required}
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
-        className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-zinc-900 outline-none focus:border-zinc-500"
+        className={`min-w-0 flex-1 ${UI_INPUT_CLASS}`}
       />
       <button
         type="button"
         onClick={() => setVisible((current) => !current)}
-        className="shrink-0 rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-700 hover:bg-zinc-50"
+        className={`shrink-0 ${UI_SECONDARY_BUTTON_CLASS}`}
       >
         {visible ? "Скрыть" : "Показать"}
       </button>

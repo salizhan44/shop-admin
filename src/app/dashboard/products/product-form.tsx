@@ -8,6 +8,13 @@ import type {
   ProductAdmin,
 } from "@/lib/products.shared";
 import { formatPriceSomInput } from "@/lib/products.shared";
+import { SelectField } from "@/components/select-field";
+import {
+  UI_INPUT_CLASS,
+  UI_LABEL_CLASS,
+  UI_PRIMARY_BUTTON_CLASS,
+  UI_SECONDARY_BUTTON_CLASS,
+} from "@/lib/ui.shared";
 
 const CREATE_NEW = "__new__";
 const NONE = "";
@@ -46,6 +53,31 @@ export function ProductForm(props: {
         ?.subcategories ?? []
     );
   }, [props.categories, selectedCategoryId]);
+
+  const categoryOptions = useMemo(
+    () => [
+      { value: NONE, label: "Без категории" },
+      ...props.categories.map((category) => ({
+        value: category.id,
+        label: category.name,
+      })),
+      { value: CREATE_NEW, label: "Новая категория" },
+    ],
+    [props.categories],
+  );
+
+  const subcategoryOptions = useMemo(() => {
+    const options = [{ value: NONE, label: "Без подкатегории" }];
+    if (categoryChoice !== CREATE_NEW) {
+      for (const subcategory of subcategories) {
+        options.push({ value: subcategory.id, label: subcategory.name });
+      }
+    }
+    if (categoryChoice !== NONE) {
+      options.push({ value: CREATE_NEW, label: "Новая подкатегория" });
+    }
+    return options;
+  }, [categoryChoice, subcategories]);
 
   function fillFromProduct(product: ProductAdmin) {
     setName(product.name);
@@ -183,12 +215,9 @@ export function ProductForm(props: {
     }
   }
 
-  const inputClass =
-    "rounded-xl border-0 bg-white px-3.5 py-2.5 text-zinc-900 shadow-sm ring-1 ring-zinc-200/80 outline-none focus:ring-2 focus:ring-zinc-400/50";
-
   const toggleClass = isEdit
-    ? "h-9 rounded border border-zinc-200 bg-white px-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
-    : "rounded-full bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800";
+    ? UI_SECONDARY_BUTTON_CLASS
+    : UI_PRIMARY_BUTTON_CLASS;
 
   return (
     <div className="flex flex-col gap-3">
@@ -210,27 +239,27 @@ export function ProductForm(props: {
       {open ? (
         <form
           onSubmit={onSubmit}
-          className="flex max-w-md flex-col gap-4 rounded-2xl bg-zinc-50/80 p-3.5 ring-1 ring-zinc-200/60"
+          className="flex max-w-md flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200/70"
         >
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-700">
+          <label className={UI_LABEL_CLASS}>
             Название
             <input
               required
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className={inputClass}
+              className={UI_INPUT_CLASS}
             />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-700">
+          <label className={UI_LABEL_CLASS}>
             Описание
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className={`min-h-20 ${inputClass}`}
+              className={`min-h-20 ${UI_INPUT_CLASS}`}
             />
           </label>
-          <div className="flex flex-col gap-1.5 text-sm text-zinc-700">
-            Фото товара
+          <div className={UI_LABEL_CLASS}>
+            Фото
             {imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -239,7 +268,7 @@ export function ProductForm(props: {
                 className="h-36 w-36 rounded-xl object-cover ring-1 ring-zinc-200/80"
               />
             ) : (
-              <p className="text-zinc-500">Пока без фото</p>
+              <p className="text-zinc-400">Нет фото</p>
             )}
             <input
               type="file"
@@ -248,134 +277,107 @@ export function ProductForm(props: {
                 onPickImage(event.target.files?.[0] ?? null);
                 event.target.value = "";
               }}
-              className="text-sm"
+              className="text-sm text-zinc-600"
             />
             {imageUrl ? (
               <button
                 type="button"
                 onClick={() => setImageUrl("")}
-                className="self-start text-sm text-zinc-600 underline"
+                className="self-start text-sm text-zinc-500 underline"
               >
-                Убрать фото
+                Убрать
               </button>
             ) : null}
           </div>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-700">
+          <label className={UI_LABEL_CLASS}>
             Категория
-            <select
+            <SelectField
               value={categoryChoice}
-              onChange={(event) => {
-                setCategoryChoice(event.target.value);
+              options={categoryOptions}
+              onChange={(value) => {
+                setCategoryChoice(value);
                 setSubcategoryChoice(NONE);
                 setSubcategoryName("");
-                if (event.target.value !== CREATE_NEW) {
+                if (value !== CREATE_NEW) {
                   setCategoryName("");
                 }
               }}
-              className={inputClass}
-            >
-              <option value={NONE}>Без категории</option>
-              {props.categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-              <option value={CREATE_NEW}>+ Новая категория…</option>
-            </select>
+            />
           </label>
           {categoryChoice === CREATE_NEW ? (
-            <label className="flex flex-col gap-1.5 text-sm text-zinc-700">
+            <label className={UI_LABEL_CLASS}>
               Название категории
               <input
                 value={categoryName}
                 onChange={(event) => setCategoryName(event.target.value)}
-                placeholder="Например, Мука"
-                className={inputClass}
+                className={UI_INPUT_CLASS}
               />
             </label>
           ) : null}
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-700">
+          <label className={UI_LABEL_CLASS}>
             Подкатегория
-            <select
+            <SelectField
               value={subcategoryChoice}
-              onChange={(event) => {
-                setSubcategoryChoice(event.target.value);
-                if (event.target.value !== CREATE_NEW) {
+              options={subcategoryOptions}
+              disabled={categoryChoice === NONE}
+              onChange={(value) => {
+                setSubcategoryChoice(value);
+                if (value !== CREATE_NEW) {
                   setSubcategoryName("");
                 }
               }}
-              disabled={categoryChoice === NONE}
-              className={`${inputClass} disabled:opacity-60`}
-            >
-              <option value={NONE}>Без подкатегории</option>
-              {categoryChoice === CREATE_NEW ? null : (
-                <>
-                  {subcategories.map((subcategory) => (
-                    <option key={subcategory.id} value={subcategory.id}>
-                      {subcategory.name}
-                    </option>
-                  ))}
-                </>
-              )}
-              {categoryChoice !== NONE ? (
-                <option value={CREATE_NEW}>+ Новая подкатегория…</option>
-              ) : null}
-            </select>
+            />
           </label>
           {subcategoryChoice === CREATE_NEW ? (
-            <label className="flex flex-col gap-1.5 text-sm text-zinc-700">
+            <label className={UI_LABEL_CLASS}>
               Название подкатегории
               <input
                 value={subcategoryName}
                 onChange={(event) => setSubcategoryName(event.target.value)}
-                placeholder="Например, Высший сорт"
-                className={inputClass}
+                className={UI_INPUT_CLASS}
               />
             </label>
           ) : null}
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-700">
+          <label className={UI_LABEL_CLASS}>
             Цена, сом
             <input
               required
               inputMode="decimal"
-              placeholder="199.90"
               value={priceSom}
               onChange={(event) => setPriceSom(event.target.value)}
-              className={inputClass}
+              className={UI_INPUT_CLASS}
             />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-700">
+          <label className={UI_LABEL_CLASS}>
             Себестоимость, сом
             <input
               required
               inputMode="decimal"
-              placeholder="120"
               value={costSom}
               onChange={(event) => setCostSom(event.target.value)}
-              className={inputClass}
+              className={UI_INPUT_CLASS}
             />
           </label>
-          <label className="flex flex-col gap-1.5 text-sm text-zinc-700">
-            Остаток на складе, шт.
+          <label className={UI_LABEL_CLASS}>
+            Остаток, шт.
             <input
               required
               inputMode="numeric"
-              placeholder="0"
               value={stockQuantity}
               onChange={(event) => setStockQuantity(event.target.value)}
-              className={inputClass}
+              className={UI_INPUT_CLASS}
             />
           </label>
           {error ? <p className="text-sm text-red-700">{error}</p> : null}
           <button
             type="submit"
             disabled={pending}
-            className="rounded-xl bg-zinc-900 px-3 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+            className={UI_PRIMARY_BUTTON_CLASS}
           >
             {pending
               ? "Сохраняем…"
               : isEdit
-                ? "Сохранить изменения"
+                ? "Сохранить"
                 : "Сохранить товар"}
           </button>
         </form>
@@ -383,3 +385,4 @@ export function ProductForm(props: {
     </div>
   );
 }
+

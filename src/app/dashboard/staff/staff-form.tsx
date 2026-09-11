@@ -5,10 +5,18 @@ import { useRouter } from "next/navigation";
 import type { ApiErrorBody } from "@/lib/auth.shared";
 import {
   ASSIGNABLE_STAFF_ROLES,
+  isAssignableStaffRole,
   staffRoleLabel,
   type AssignableStaffRole,
 } from "@/lib/roles.shared";
 import { PasswordInput } from "@/components/password-input";
+import { SelectField } from "@/components/select-field";
+import {
+  UI_CARD_CLASS,
+  UI_INPUT_CLASS,
+  UI_LABEL_CLASS,
+  UI_PRIMARY_BUTTON_CLASS,
+} from "@/lib/ui.shared";
 
 export function StaffForm() {
   const router = useRouter();
@@ -52,28 +60,31 @@ export function StaffForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex max-w-md flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm">
+    <form
+      onSubmit={onSubmit}
+      className={`flex max-w-md flex-col gap-4 ${UI_CARD_CLASS} p-5`}
+    >
+      <label className={UI_LABEL_CLASS}>
         Имя
         <input
           required
           value={name}
           onChange={(event) => setName(event.target.value)}
-          className="rounded border border-zinc-300 bg-white px-3 py-2"
+          className={UI_INPUT_CLASS}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Email для входа
+      <label className={UI_LABEL_CLASS}>
+        Email
         <input
           required
           type="email"
           autoComplete="off"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="rounded border border-zinc-300 bg-white px-3 py-2"
+          className={UI_INPUT_CLASS}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={UI_LABEL_CLASS}>
         Пароль
         <PasswordInput
           value={password}
@@ -82,29 +93,28 @@ export function StaffForm() {
           required
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={UI_LABEL_CLASS}>
         Роль
-        <select
+        <SelectField
           value={role}
-          onChange={(event) =>
-            setRole(event.target.value as AssignableStaffRole)
-          }
-          className="rounded border border-zinc-300 bg-white px-3 py-2"
-        >
-          {ASSIGNABLE_STAFF_ROLES.map((item) => (
-            <option key={item} value={item}>
-              {staffRoleLabel(item)}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => {
+            if (isAssignableStaffRole(value)) {
+              setRole(value);
+            }
+          }}
+          options={ASSIGNABLE_STAFF_ROLES.map((item) => ({
+            value: item,
+            label: staffRoleLabel(item),
+          }))}
+        />
       </label>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-60"
+        className={UI_PRIMARY_BUTTON_CLASS}
       >
-        {pending ? "Сохраняем…" : "Добавить сотрудника"}
+        {pending ? "Сохраняем…" : "Добавить"}
       </button>
     </form>
   );

@@ -9,6 +9,13 @@ import {
   promoKindLabel,
   type PromoCodeKind,
 } from "@/lib/promo.shared";
+import { SelectField } from "@/components/select-field";
+import {
+  UI_CARD_CLASS,
+  UI_INPUT_CLASS,
+  UI_LABEL_CLASS,
+  UI_PRIMARY_BUTTON_CLASS,
+} from "@/lib/ui.shared";
 
 export function PromoForm(props: { products: ProductAdmin[] }) {
   const router = useRouter();
@@ -61,104 +68,95 @@ export function PromoForm(props: { products: ProductAdmin[] }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex max-w-md flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm">
+    <form
+      onSubmit={onSubmit}
+      className={`flex max-w-md flex-col gap-4 ${UI_CARD_CLASS} p-5`}
+    >
+      <label className={UI_LABEL_CLASS}>
         Код
         <input
           required
           value={code}
           onChange={(event) => setCode(event.target.value)}
           placeholder="ROLA10"
-          className="rounded border border-zinc-300 bg-white px-3 py-2 uppercase"
+          className={`${UI_INPUT_CLASS} uppercase`}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Что делает
-        <select
+      <label className={UI_LABEL_CLASS}>
+        Скидка
+        <SelectField
           value={kind}
-          onChange={(event) => setKind(event.target.value as PromoCodeKind)}
-          className="rounded border border-zinc-300 bg-white px-3 py-2"
-        >
-          {PROMO_CODE_KINDS.map((item) => (
-            <option key={item} value={item}>
-              {promoKindLabel(item)}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => setKind(value as PromoCodeKind)}
+          options={PROMO_CODE_KINDS.map((item) => ({
+            value: item,
+            label: promoKindLabel(item),
+          }))}
+        />
       </label>
       {kind === "PERCENT" ? (
-        <label className="flex flex-col gap-1 text-sm">
-          Процент скидки
+        <label className={UI_LABEL_CLASS}>
+          Процент
           <input
             required
             value={percentOff}
             onChange={(event) => setPercentOff(event.target.value)}
             inputMode="numeric"
-            className="rounded border border-zinc-300 bg-white px-3 py-2"
+            className={UI_INPUT_CLASS}
           />
         </label>
       ) : null}
       {kind === "AMOUNT" ? (
-        <label className="flex flex-col gap-1 text-sm">
-          Скидка, сом
+        <label className={UI_LABEL_CLASS}>
+          Сумма, сом
           <input
             required
             value={amountSom}
             onChange={(event) => setAmountSom(event.target.value)}
             inputMode="decimal"
-            className="rounded border border-zinc-300 bg-white px-3 py-2"
+            className={UI_INPUT_CLASS}
           />
         </label>
       ) : null}
       {kind === "FREE_PRODUCT" ? (
-        <label className="flex flex-col gap-1 text-sm">
+        <label className={UI_LABEL_CLASS}>
           Товар в подарок
-          <select
-            required
+          <SelectField
             value={freeProductId}
-            onChange={(event) => setFreeProductId(event.target.value)}
-            className="rounded border border-zinc-300 bg-white px-3 py-2"
-          >
-            <option value="">Выберите товар</option>
-            {props.products.map((product) => (
-              <option key={product.id} value={product.id}>
-                {product.name}
-              </option>
-            ))}
-          </select>
+            placeholder="Выберите товар"
+            onChange={setFreeProductId}
+            options={props.products.map((product) => ({
+              value: product.id,
+              label: product.name,
+            }))}
+          />
         </label>
       ) : null}
-      {kind === "FREE_DELIVERY" ? (
-        <p className="text-sm text-zinc-600">
-          Сейчас доставка без отдельной платы — код сохранится, скидка 0 сом.
-        </p>
-      ) : null}
-      <label className="flex flex-col gap-1 text-sm">
-        Всего применений на всех
+      <label className={UI_LABEL_CLASS}>
+        Лимит на всех
         <input
           value={maxTotalRedemptions}
           onChange={(event) => setMaxTotalRedemptions(event.target.value)}
-          placeholder="Пусто — без лимита, например 100"
+          placeholder="Без лимита"
           inputMode="numeric"
-          className="rounded border border-zinc-300 bg-white px-3 py-2"
+          className={UI_INPUT_CLASS}
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm">
-        Раз на одного клиента
+      <label className={UI_LABEL_CLASS}>
+        На одного клиента
         <input
           value={maxPerCustomer}
           onChange={(event) => setMaxPerCustomer(event.target.value)}
           inputMode="numeric"
-          className="rounded border border-zinc-300 bg-white px-3 py-2"
+          className={UI_INPUT_CLASS}
         />
       </label>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-zinc-900 px-3 py-2 text-sm text-white disabled:opacity-60"
+        className={UI_PRIMARY_BUTTON_CLASS}
       >
-        {pending ? "Сохраняем…" : "Создать промокод"}
+        {pending ? "Сохраняем…" : "Создать"}
       </button>
     </form>
   );

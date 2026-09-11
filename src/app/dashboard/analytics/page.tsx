@@ -52,24 +52,19 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-10">
-      <PageHeader
-        title="Аналитика"
-        description="Сначала склад, затем продажи: выручка и чистая прибыль по подтверждённым заказам."
-      />
+      <PageHeader title="Аналитика" />
 
       <section className="flex flex-col gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900">Склад</h2>
-          <p className="mt-1 text-sm text-zinc-600">
-            Сколько товара осталось, по какой цене продаём. Менять остаток —
-            в ассортименте.
-          </p>
-        </div>
+        <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
+          Склад
+        </h2>
         <WarehouseBoard snapshot={warehouse} />
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-zinc-900">Продажи</h2>
+        <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
+          Продажи
+        </h2>
         <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <li className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-zinc-200/70">
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
@@ -79,18 +74,15 @@ export default async function AnalyticsPage() {
               {formatPriceSomLabel(summary.confirmedRevenueCents)}
             </p>
             <p className="mt-0.5 text-xs text-zinc-500">
-              {summary.confirmedOrderCount} подтверждённых
+              {summary.confirmedOrderCount} заказов
             </p>
           </li>
           <li className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-zinc-200/70">
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-              Чистая прибыль
+              Прибыль
             </p>
             <p className="mt-1 text-xl font-semibold text-teal-800">
               {formatSignedSomLabel(summary.confirmedProfitCents)}
-            </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              выручка минус себестоимость
             </p>
           </li>
           <li className="rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-zinc-200/70">
@@ -111,7 +103,6 @@ export default async function AnalyticsPage() {
             <p className="mt-1 text-xl font-semibold text-zinc-900">
               {summary.rejectedOrderCount}
             </p>
-            <p className="mt-0.5 text-xs text-zinc-500">заказ не удаляется</p>
           </li>
         </ul>
 
@@ -125,23 +116,15 @@ export default async function AnalyticsPage() {
 
       <section className="grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-900">Топ по прибыли</h2>
-            <p className="mt-1 text-sm text-zinc-600">
-              Пять самых выгодных. Прибыль = выручка минус себестоимость.
-            </p>
-          </div>
+          <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
+            Топ по прибыли
+          </h2>
           <ProductProfitList products={topProducts} />
         </div>
         <div className="flex flex-col gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-zinc-900">
-              Антитоп по прибыли
-            </h2>
-            <p className="mt-1 text-sm text-zinc-600">
-              Пять наименее выгодных — видно, что тянет вниз.
-            </p>
-          </div>
+          <h2 className="text-lg font-semibold tracking-tight text-zinc-900">
+            Антитоп
+          </h2>
           <ProductProfitList products={bottomProducts} tone="down" />
         </div>
       </section>

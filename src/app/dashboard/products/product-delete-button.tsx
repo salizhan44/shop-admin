@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ApiErrorBody } from "@/lib/auth.shared";
+import { UI_DANGER_BUTTON_CLASS } from "@/lib/ui.shared";
 
 export function ProductDeleteButton(props: {
   productId: string;
@@ -14,7 +15,7 @@ export function ProductDeleteButton(props: {
 
   async function onDelete() {
     const ok = window.confirm(
-      `Удалить «${props.productName}» из ассортимента?\nТовар исчезнет из приложения. Заказы с ним сохранятся.`,
+      `Удалить «${props.productName}»? Заказы с этим товаром сохранятся.`,
     );
     if (!ok) {
       return;
@@ -49,7 +50,7 @@ export function ProductDeleteButton(props: {
           void onDelete();
         }}
         disabled={pending}
-        className="h-9 rounded border border-red-200 bg-white px-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+        className={`h-9 ${UI_DANGER_BUTTON_CLASS}`}
       >
         {pending ? "Удаляем…" : "Удалить"}
       </button>

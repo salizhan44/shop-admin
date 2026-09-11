@@ -185,9 +185,7 @@ export function SalesChart(props: { days: DailySalesRow[] }) {
             {active.orderCount} зак.
           </p>
         ) : (
-          <p className="text-sm text-zinc-500">
-            Колесико — масштаб, полоса снизу — сдвиг влево и вправо
-          </p>
+          <p className="text-sm text-zinc-400">Наведите на день</p>
         )}
       </div>
       <div className="relative">

@@ -1,3 +1,5 @@
+import type { StatusTone } from "./ui.shared";
+
 export const ORDER_STATUSES = ["PENDING", "CONFIRMED", "REJECTED"] as const;
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
@@ -133,11 +135,22 @@ export function isOrderPublic(value: unknown): value is OrderPublic {
 export function orderStatusLabel(status: OrderStatus): string {
   switch (status) {
     case "PENDING":
-      return "Ожидает подтверждения";
+      return "Ожидает";
     case "CONFIRMED":
       return "Подтверждён";
     case "REJECTED":
       return "Отклонён";
+  }
+}
+
+export function orderStatusTone(status: OrderStatus): StatusTone {
+  switch (status) {
+    case "PENDING":
+      return "pending";
+    case "CONFIRMED":
+      return "ok";
+    case "REJECTED":
+      return "bad";
   }
 }
 

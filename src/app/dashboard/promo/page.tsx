@@ -10,6 +10,8 @@ import {
 import { formatPriceSomLabel } from "@/lib/products.shared";
 import { PageHeader } from "@/components/page-header";
 import { AccessDenied } from "@/components/access-denied";
+import { StatusBadge } from "@/components/status-badge";
+import { UI_CARD_CLASS, UI_MUTED_CLASS } from "@/lib/ui.shared";
 import { PromoForm } from "./promo-form";
 import { PromoActiveToggle } from "./promo-active-toggle";
 
@@ -21,7 +23,7 @@ function effectText(promo: PromoCodeAdmin): string {
     return `−${formatPriceSomLabel(promo.amountOffCents)}`;
   }
   if (promo.kind === "FREE_PRODUCT") {
-    return `подарок: ${promo.freeProductName ?? "товар"}`;
+    return promo.freeProductName ?? "подарок";
   }
   return promoKindLabel(promo.kind);
 }
@@ -29,9 +31,9 @@ function effectText(promo: PromoCodeAdmin): string {
 function limitText(promo: PromoCodeAdmin): string {
   const total =
     promo.maxTotalRedemptions === null
-      ? "без общего лимита"
-      : `${promo.redemptionCount} из ${promo.maxTotalRedemptions} на всех`;
-  return `${total} · до ${promo.maxPerCustomer} на клиента`;
+      ? "без лимита"
+      : `${promo.redemptionCount} / ${promo.maxTotalRedemptions}`;
+  return `${total} · ${promo.maxPerCustomer} на клиента`;
 }
 
 export default async function PromoPage() {
@@ -55,43 +57,40 @@ export default async function PromoPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Промокоды"
-        description="Выберите, что делает код: процент, сумма, подарок или бесплатная доставка. Общий лимит — например, первые 100 человек."
-      />
+      <PageHeader title="Промокоды" />
       <PromoForm products={products} />
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Список</h2>
-        {promoCodes.length === 0 ? (
-          <p className="text-sm text-zinc-600">Пока нет ни одного промокода.</p>
-        ) : (
-          <ul className="flex flex-col gap-2">
-            {promoCodes.map((promo) => (
-              <li
-                key={promo.id}
-                className="rounded-xl border border-zinc-200 bg-white px-4 py-3"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-medium">{promo.code}</p>
-                    <p className="text-sm text-zinc-600">
-                      {promoKindLabel(promo.kind)} · {effectText(promo)}
-                    </p>
-                    <p className="text-sm text-zinc-600">{limitText(promo)}</p>
-                    <p className="text-sm text-zinc-600">
-                      {promo.isActive ? "Включён" : "Выключен"}
-                    </p>
-                  </div>
+      {promoCodes.length === 0 ? (
+        <p className={UI_MUTED_CLASS}>Нет промокодов</p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {promoCodes.map((promo) => (
+            <li
+              key={promo.id}
+              className={`${UI_CARD_CLASS} px-5 py-4`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-zinc-900">{promo.code}</p>
+                  <p className="mt-0.5 text-sm text-zinc-600">
+                    {promoKindLabel(promo.kind)} · {effectText(promo)}
+                  </p>
+                  <p className={UI_MUTED_CLASS}>{limitText(promo)}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <StatusBadge
+                    label={promo.isActive ? "Включён" : "Выключен"}
+                    tone={promo.isActive ? "ok" : "neutral"}
+                  />
                   <PromoActiveToggle
                     promoId={promo.id}
                     isActive={promo.isActive}
                   />
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ export function ProductProfitList(props: {
   if (props.products.length === 0) {
     return (
       <p className="text-sm text-zinc-600">
-        {props.emptyText ?? "Подтверждённых продаж пока нет."}
+        {props.emptyText ?? "Нет продаж"}
       </p>
     );
   }

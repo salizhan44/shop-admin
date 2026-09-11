@@ -2,23 +2,19 @@ import type { ReactNode } from "react";
 
 export function PageHeader(props: {
   title: string;
-  description?: string;
   actions?: ReactNode;
 }) {
   return (
-    <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="min-w-0">
-        <h1 className="text-xl font-semibold text-zinc-900 sm:text-2xl">
-          {props.title}
-        </h1>
-        {props.description ? (
-          <p className="mt-1 max-w-2xl text-sm text-zinc-600">
-            {props.description}
-          </p>
-        ) : null}
-      </div>
+    <header
+      className={`flex items-center justify-between gap-3 ${
+        props.actions ? "" : "hidden lg:flex"
+      }`}
+    >
+      <h1 className="hidden min-w-0 truncate text-2xl font-semibold tracking-tight text-zinc-900 lg:block">
+        {props.title}
+      </h1>
       {props.actions ? (
-        <div className="shrink-0">{props.actions}</div>
+        <div className="ml-auto shrink-0 lg:ml-0">{props.actions}</div>
       ) : null}
     </header>
   );

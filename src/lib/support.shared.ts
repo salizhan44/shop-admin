@@ -1,3 +1,5 @@
+import type { StatusTone } from "./ui.shared";
+
 export const SUPPORT_TICKET_STATUSES = ["OPEN", "CLOSED"] as const;
 
 export type SupportTicketStatus = (typeof SUPPORT_TICKET_STATUSES)[number];
@@ -126,6 +128,12 @@ export function supportTicketStatusLabel(status: SupportTicketStatus): string {
     case "CLOSED":
       return "Закрыто";
   }
+}
+
+export function supportTicketStatusTone(
+  status: SupportTicketStatus,
+): StatusTone {
+  return status === "OPEN" ? "pending" : "ok";
 }
 
 export function formatSupportTicketDate(iso: string): string {

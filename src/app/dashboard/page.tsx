@@ -7,7 +7,6 @@ import {
   canAccessSupport,
   canAccessWarehouse,
   canManageCatalog,
-  staffRoleLabel,
 } from "@/lib/roles.shared";
 import { LOW_STOCK_THRESHOLD } from "@/lib/dashboard-nav.shared";
 import { listOrdersForStaff } from "@/lib/orders.server";
@@ -17,23 +16,29 @@ import { listAccountingOrders } from "@/lib/accounting.server";
 import { sumConfirmedRevenue } from "@/lib/accounting.shared";
 import { formatPriceSomLabel } from "@/lib/products.shared";
 import { PageHeader } from "@/components/page-header";
+import { UI_CARD_CLASS } from "@/lib/ui.shared";
 
 function SummaryCard(props: {
   label: string;
   value: string;
-  hint?: string;
   href: string;
+  attention?: boolean;
 }) {
   return (
     <Link
       href={props.href}
-      className="block rounded-xl border border-zinc-200 bg-white px-4 py-4 transition hover:border-zinc-300 hover:bg-zinc-50"
+      className={`${UI_CARD_CLASS} block px-5 py-4 transition hover:bg-zinc-50 ${
+        props.attention ? "ring-amber-200/80" : ""
+      }`}
     >
-      <p className="text-sm text-zinc-600">{props.label}</p>
-      <p className="mt-1 text-2xl font-semibold text-zinc-900">{props.value}</p>
-      {props.hint ? (
-        <p className="mt-1 text-xs text-zinc-500">{props.hint}</p>
-      ) : null}
+      <p className="text-sm text-zinc-500">{props.label}</p>
+      <p
+        className={`mt-1 text-2xl font-semibold tracking-tight ${
+          props.attention ? "text-amber-800" : "text-zinc-900"
+        }`}
+      >
+        {props.value}
+      </p>
     </Link>
   );
 }
@@ -67,33 +72,29 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Обзор"
-        description={`${session.name} · ${staffRoleLabel(session.role)}. Кратко о том, что требует внимания.`}
-      />
+      <PageHeader title="Обзор" />
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {showWarehouse ? (
           <SummaryCard
-            label="Ожидают подтверждения"
+            label="Ожидают"
             value={String(pendingOrders.length)}
-            hint="Заказы из приложения"
             href="/dashboard/orders"
+            attention={pendingOrders.length > 0}
           />
         ) : null}
         {showSupport ? (
           <SummaryCard
-            label="Открытые обращения"
+            label="Обращения"
             value={String(openTickets.length)}
-            hint="Поддержка клиентов"
             href="/dashboard/support"
+            attention={openTickets.length > 0}
           />
         ) : null}
         {showWarehouse || showCatalog ? (
           <SummaryCard
             label="Мало на складе"
             value={String(lowStock.length)}
-            hint={`Остаток ≤ ${LOW_STOCK_THRESHOLD} шт.`}
             href={
               canAccessAnalytics(session.role)
                 ? "/dashboard/analytics"
@@ -101,23 +102,17 @@ export default async function DashboardPage() {
                   ? "/dashboard/products"
                   : "/dashboard/stock"
             }
+            attention={lowStock.length > 0}
           />
         ) : null}
         {showAccounting ? (
           <SummaryCard
-            label="Подтверждённая выручка"
+            label="Выручка"
             value={formatPriceSomLabel(confirmedRevenue)}
-            hint="Только подтверждённые заказы"
             href="/dashboard/accounting"
           />
         ) : null}
       </section>
-
-      {!showWarehouse && !showSupport && !showAccounting && !showCatalog ? (
-        <p className="rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-700">
-          Для вашей роли пока нет сводных карточек. Выберите раздел в меню.
-        </p>
-      ) : null}
     </div>
   );
 }

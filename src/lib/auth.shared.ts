@@ -28,7 +28,15 @@ export type CustomerPublic = {
   name: string;
   homeAddress: string;
   avatarUrl: string;
+  /** false — аккаунт только через Google, пароля нет. */
+  hasPassword: boolean;
 };
+
+export function customerHasPassword(
+  passwordHash: string | null | undefined,
+): boolean {
+  return typeof passwordHash === "string" && passwordHash.length > 0;
+}
 
 export type CustomerAuthSuccess = {
   accessToken: string;

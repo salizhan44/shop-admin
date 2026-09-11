@@ -126,6 +126,115 @@ export function parseCostToCents(costSom: string): number | null {
 }
 
 export const UNCATEGORIZED_WAREHOUSE_LABEL = "Без категории";
+export const UNCATEGORIZED_SUBCATEGORY_LABEL = "Без подкатегории";
+export const UNCATEGORIZED_CATALOG_FILTER_ID = "__uncategorized__";
+export const UNCATEGORIZED_SUBCATEGORY_FILTER_ID = "__uncategorized_sub__";
+
+export type CatalogSubcategoryGroup = {
+  key: string;
+  name: string;
+  products: ProductAdmin[];
+};
+
+export type CatalogCategoryGroup = {
+  key: string;
+  name: string;
+  products: ProductAdmin[];
+  subgroups: CatalogSubcategoryGroup[];
+};
+
+function sortCatalogNamedGroups<T extends { name: string }>(
+  groups: T[],
+  uncategorizedName: string,
+): T[] {
+  return [...groups].sort((left, right) => {
+    if (left.name === uncategorizedName) {
+      return 1;
+    }
+    if (right.name === uncategorizedName) {
+      return -1;
+    }
+    return left.name.localeCompare(right.name, "ru");
+  });
+}
+
+export function groupCatalogProductsBySubcategory(
+  products: ProductAdmin[],
+): CatalogSubcategoryGroup[] {
+  const byKey = new Map<string, { name: string; products: ProductAdmin[] }>();
+  for (const product of products) {
+    const name =
+      product.subcategoryName?.trim() || UNCATEGORIZED_SUBCATEGORY_LABEL;
+    const key = product.subcategoryId ?? UNCATEGORIZED_SUBCATEGORY_FILTER_ID;
+    const current = byKey.get(key);
+    if (current) {
+      current.products.push(product);
+    } else {
+      byKey.set(key, { name, products: [product] });
+    }
+  }
+
+  return sortCatalogNamedGroups(
+    [...byKey.entries()].map(([key, group]) => ({
+      key,
+      name: group.name,
+      products: group.products,
+    })),
+    UNCATEGORIZED_SUBCATEGORY_LABEL,
+  );
+}
+
+export function groupCatalogProductsByCategory(
+  products: ProductAdmin[],
+): CatalogCategoryGroup[] {
+  const byKey = new Map<string, { name: string; products: ProductAdmin[] }>();
+  for (const product of products) {
+    const name = product.categoryName?.trim() || UNCATEGORIZED_WAREHOUSE_LABEL;
+    const key = product.categoryId ?? UNCATEGORIZED_CATALOG_FILTER_ID;
+    const current = byKey.get(key);
+    if (current) {
+      current.products.push(product);
+    } else {
+      byKey.set(key, { name, products: [product] });
+    }
+  }
+
+  return sortCatalogNamedGroups(
+    [...byKey.entries()].map(([key, group]) => ({
+      key,
+      name: group.name,
+      products: group.products,
+      subgroups: groupCatalogProductsBySubcategory(group.products),
+    })),
+    UNCATEGORIZED_WAREHOUSE_LABEL,
+  );
+}
+
+export function filterCatalogProducts(
+  products: ProductAdmin[],
+  categoryId: string | null,
+  subcategoryId: string | null,
+): ProductAdmin[] {
+  return products.filter((product) => {
+    if (categoryId === UNCATEGORIZED_CATALOG_FILTER_ID) {
+      if (product.categoryId) {
+        return false;
+      }
+    } else if (categoryId && product.categoryId !== categoryId) {
+      return false;
+    }
+
+    if (subcategoryId === UNCATEGORIZED_SUBCATEGORY_FILTER_ID) {
+      if (product.subcategoryId) {
+        return false;
+      }
+    } else if (subcategoryId && product.subcategoryId !== subcategoryId) {
+      return false;
+    }
+
+    return true;
+  });
+}
 
 export type WarehouseCategoryGroup = {
   name: string;

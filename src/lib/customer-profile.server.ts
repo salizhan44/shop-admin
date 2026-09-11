@@ -1,12 +1,17 @@
 import { mkdir, writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "./prisma.server";
-import type { CustomerPublic } from "./auth.shared";
+import { hashPassword, verifyPassword } from "./password.server";
+import { customerHasPassword, type CustomerPublic } from "./auth.shared";
 import { toCustomerPublic } from "./customer-auth.server";
 import {
+  resolveCurrentPasswordCheck,
+  resolveCustomerPasswordChange,
   validateAvatarUrl,
   validateCustomerName,
   validateHomeAddress,
+  type CustomerCurrentPasswordBody,
+  type CustomerPasswordChangeBody,
   type CustomerProfileUpdateBody,
 } from "./customer-profile.shared";
 
@@ -89,6 +94,7 @@ export async function getCustomerProfile(
       name: true,
       homeAddress: true,
       avatarUrl: true,
+      passwordHash: true,
     },
   });
   if (!customer) {
@@ -161,6 +167,7 @@ export async function updateCustomerProfile(
         name: true,
         homeAddress: true,
         avatarUrl: true,
+        passwordHash: true,
       },
     });
     const avatarUrl = await normalizeStoredAvatar(
@@ -174,4 +181,62 @@ export async function updateCustomerProfile(
         "Не удалось сохранить профиль. Перезапустите сайт (admin) и попробуйте снова.",
     };
   }
+}
+
+export async function changeCustomerPassword(
+  customerId: string,
+  body: CustomerPasswordChangeBody,
+): Promise<{ ok: true } | { error: string }> {
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    select: { passwordHash: true },
+  });
+  if (!customer) {
+    return { error: "Не найден" };
+  }
+
+  const hasStoredPassword = customerHasPassword(customer.passwordHash);
+  const currentPasswordMatches =
+    hasStoredPassword && customer.passwordHash
+      ? await verifyPassword(body.currentPassword, customer.passwordHash)
+      : false;
+  const resolved = resolveCustomerPasswordChange({
+    hasStoredPassword,
+    currentPassword: body.currentPassword,
+    newPassword: body.newPassword,
+    currentPasswordMatches,
+  });
+  if ("error" in resolved) {
+    return resolved;
+  }
+
+  await prisma.customer.update({
+    where: { id: customerId },
+    data: { passwordHash: await hashPassword(body.newPassword) },
+  });
+  return { ok: true };
+}
+
+export async function verifyCustomerPassword(
+  customerId: string,
+  body: CustomerCurrentPasswordBody,
+): Promise<{ ok: true } | { error: string }> {
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    select: { passwordHash: true },
+  });
+  if (!customer) {
+    return { error: "Не найден" };
+  }
+
+  const hasStoredPassword = customerHasPassword(customer.passwordHash);
+  const currentPasswordMatches =
+    hasStoredPassword && customer.passwordHash
+      ? await verifyPassword(body.currentPassword, customer.passwordHash)
+      : false;
+  return resolveCurrentPasswordCheck({
+    hasStoredPassword,
+    currentPassword: body.currentPassword,
+    currentPasswordMatches,
+  });
 }

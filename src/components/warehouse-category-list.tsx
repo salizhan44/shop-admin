@@ -58,7 +58,7 @@ export function WarehouseCategoryList(props: {
   );
 
   if (groups.length === 0) {
-    return <p className="text-sm text-zinc-600">Активных товаров пока нет.</p>;
+    return <p className="text-sm text-zinc-500">Нет товаров</p>;
   }
 
   return (

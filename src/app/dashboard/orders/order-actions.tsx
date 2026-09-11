@@ -3,10 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ApiErrorBody } from "@/lib/auth.shared";
+import {
+  UI_DANGER_BUTTON_CLASS,
+  UI_PRIMARY_BUTTON_CLASS,
+  UI_SECONDARY_BUTTON_CLASS,
+  UI_TEXTAREA_CLASS,
+  UI_LABEL_CLASS,
+} from "@/lib/ui.shared";
 
 export function OrderActions(props: { orderId: string }) {
   const router = useRouter();
   const [reason, setReason] = useState("");
+  const [rejectOpen, setRejectOpen] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState<"confirm" | "reject" | null>(null);
 
@@ -45,6 +53,7 @@ export function OrderActions(props: { orderId: string }) {
         return;
       }
       setReason("");
+      setRejectOpen(false);
       router.refresh();
     } catch {
       setError("Нет связи с сервером");
@@ -54,34 +63,59 @@ export function OrderActions(props: { orderId: string }) {
   }
 
   return (
-    <div className="mt-3 flex flex-col gap-2 border-t border-zinc-200 pt-3">
+    <div className="mt-4 flex flex-col gap-3 border-t border-zinc-100 pt-4">
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={onConfirm}
+          onClick={() => {
+            void onConfirm();
+          }}
           disabled={pending !== null}
-          className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white disabled:opacity-60"
+          className={UI_PRIMARY_BUTTON_CLASS}
         >
           {pending === "confirm" ? "Подтверждаем…" : "Подтвердить"}
         </button>
+        <button
+          type="button"
+          onClick={() => setRejectOpen((current) => !current)}
+          disabled={pending !== null}
+          className={UI_DANGER_BUTTON_CLASS}
+        >
+          Отклонить
+        </button>
       </div>
-      <label className="flex flex-col gap-1 text-sm">
-        Причина отклонения
-        <textarea
-          value={reason}
-          onChange={(event) => setReason(event.target.value)}
-          className="min-h-16 rounded border border-zinc-300 bg-white px-3 py-2"
-          placeholder="Например: товара нет на складе"
-        />
-      </label>
-      <button
-        type="button"
-        onClick={onReject}
-        disabled={pending !== null}
-        className="self-start rounded border border-red-300 px-3 py-1.5 text-sm text-red-800 disabled:opacity-60"
-      >
-        {pending === "reject" ? "Отклоняем…" : "Отклонить"}
-      </button>
+      {rejectOpen ? (
+        <div className="flex flex-col gap-2">
+          <label className={UI_LABEL_CLASS}>
+            Причина
+            <textarea
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              className={UI_TEXTAREA_CLASS}
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                void onReject();
+              }}
+              disabled={pending !== null}
+              className={UI_DANGER_BUTTON_CLASS}
+            >
+              {pending === "reject" ? "Отклоняем…" : "Отклонить заказ"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setRejectOpen(false)}
+              disabled={pending !== null}
+              className={UI_SECONDARY_BUTTON_CLASS}
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      ) : null}
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
     </div>
   );

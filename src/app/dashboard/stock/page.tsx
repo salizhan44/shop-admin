@@ -33,10 +33,7 @@ export default async function StockPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Склад"
-        description="Просмотр остатков: название, цена и фото. Изменить количество может владелец в ассортименте. При подтверждении заказа остаток уменьшается."
-      />
+      <PageHeader title="Склад" />
       <WarehouseBoard snapshot={snapshot} />
     </div>
   );

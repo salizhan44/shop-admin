@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { DashboardNavItem } from "@/lib/dashboard-nav.shared";
 import { getDashboardPageTitle } from "@/lib/dashboard-nav.shared";
 import { LogoutButton } from "@/components/logout-button";
+import { BrandLogo } from "@/components/brand-logo";
 
 export function DashboardShell(props: {
   staffName: string;
@@ -52,8 +53,8 @@ export function DashboardShell(props: {
             href={item.href}
             className={
               active
-                ? "rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white"
-                : "rounded-lg px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+                ? "rounded-xl bg-zinc-900 px-3 py-2 text-sm font-medium text-white"
+                : "rounded-xl px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
             }
           >
             {item.label}
@@ -67,17 +68,16 @@ export function DashboardShell(props: {
     <div className="min-h-screen bg-zinc-100 lg:flex">
       <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-zinc-200 bg-white lg:flex">
         <div className="border-b border-zinc-200 px-4 py-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-            Магазин
+          <BrandLogo />
+          <p className="mt-2 text-sm font-semibold text-zinc-900">
+            {props.roleLabel}
           </p>
-          <p className="mt-0.5 text-sm font-semibold text-zinc-900">Панель</p>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">{nav}</div>
         <div className="border-t border-zinc-200 px-4 py-3">
           <p className="truncate text-sm font-medium text-zinc-900">
             {props.staffName}
           </p>
-          <p className="truncate text-xs text-zinc-500">{props.roleLabel}</p>
         </div>
       </aside>
 
@@ -91,11 +91,11 @@ export function DashboardShell(props: {
           />
           <aside className="absolute inset-y-0 left-0 flex w-[min(100%,18rem)] flex-col bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                  Магазин
+              <div className="min-w-0">
+                <BrandLogo />
+                <p className="mt-2 text-sm font-semibold text-zinc-900">
+                  {props.roleLabel}
                 </p>
-                <p className="text-sm font-semibold text-zinc-900">Меню</p>
               </div>
               <button
                 type="button"
@@ -111,9 +111,6 @@ export function DashboardShell(props: {
                 {props.staffName}
               </p>
               <p className="truncate text-xs text-zinc-500">{props.staffEmail}</p>
-              <p className="mt-0.5 truncate text-xs text-zinc-500">
-                {props.roleLabel}
-              </p>
             </div>
           </aside>
         </div>
@@ -135,18 +132,15 @@ export function DashboardShell(props: {
             </span>
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-zinc-900 lg:text-base">
+            <p className="truncate text-sm font-semibold text-zinc-900 lg:hidden">
               {pageTitle}
-            </p>
-            <p className="hidden truncate text-xs text-zinc-500 sm:block lg:hidden">
-              {props.staffName} · {props.roleLabel}
             </p>
           </div>
           <LogoutButton />
         </header>
 
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto w-full">{props.children}</div>
+        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-10">
+          <div className="mx-auto w-full max-w-6xl">{props.children}</div>
         </main>
       </div>
     </div>

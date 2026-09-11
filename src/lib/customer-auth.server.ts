@@ -1,7 +1,11 @@
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "./prisma.server";
 import { signCustomerAccessToken } from "./auth.server";
-import type { CustomerAuthSuccess, CustomerPublic } from "./auth.shared";
+import {
+  customerHasPassword,
+  type CustomerAuthSuccess,
+  type CustomerPublic,
+} from "./auth.shared";
 
 const REFRESH_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 
@@ -36,6 +40,7 @@ export function toCustomerPublic(customer: {
   name: string;
   homeAddress: string;
   avatarUrl: string;
+  passwordHash: string | null;
 }): CustomerPublic {
   return {
     id: customer.id,
@@ -43,5 +48,6 @@ export function toCustomerPublic(customer: {
     name: customer.name,
     homeAddress: customer.homeAddress,
     avatarUrl: customer.avatarUrl,
+    hasPassword: customerHasPassword(customer.passwordHash),
   };
 }

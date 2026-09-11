@@ -63,7 +63,7 @@ export function RefreshWithUpdates(props: {
         onClick={onRefresh}
         aria-label="Обновить"
         title="Обновить"
-        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-300 bg-white text-[#a1a1aa] hover:bg-zinc-50"
+        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-zinc-400 ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 hover:text-zinc-700"
       >
         <span className="-mt-1 text-[22px] leading-none" aria-hidden>
           ↻

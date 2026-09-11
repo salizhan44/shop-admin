@@ -30,4 +30,14 @@ const analytics = spawnSync("npx", ["tsx", "scripts/verify-analytics.mjs"], {
   shell: true,
 });
 
-process.exit(analytics.status === null ? 1 : analytics.status);
+if (analytics.status !== 0) {
+  process.exit(analytics.status === null ? 1 : analytics.status);
+}
+
+const password = spawnSync("npx", ["tsx", "scripts/verify-password.mjs"], {
+  cwd: root,
+  stdio: "inherit",
+  shell: true,
+});
+
+process.exit(password.status === null ? 1 : password.status);

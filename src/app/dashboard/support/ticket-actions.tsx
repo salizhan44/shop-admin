@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ApiErrorBody } from "@/lib/auth.shared";
+import {
+  UI_LABEL_CLASS,
+  UI_PRIMARY_BUTTON_CLASS,
+  UI_TEXTAREA_CLASS,
+} from "@/lib/ui.shared";
 
 export function TicketActions(props: { ticketId: string }) {
   const router = useRouter();
@@ -37,21 +42,22 @@ export function TicketActions(props: { ticketId: string }) {
   }
 
   return (
-    <div className="mt-3 flex flex-col gap-2 border-t border-zinc-200 pt-3">
-      <label className="flex flex-col gap-1 text-sm">
-        Ответ клиенту
+    <div className="mt-4 flex flex-col gap-3 border-t border-zinc-100 pt-4">
+      <label className={UI_LABEL_CLASS}>
+        Ответ
         <textarea
           value={reply}
           onChange={(event) => setReply(event.target.value)}
-          className="min-h-20 rounded border border-zinc-300 bg-white px-3 py-2"
-          placeholder="Напишите ответ и закройте обращение"
+          className={UI_TEXTAREA_CLASS}
         />
       </label>
       <button
         type="button"
-        onClick={onClose}
+        onClick={() => {
+          void onClose();
+        }}
         disabled={pending}
-        className="self-start rounded bg-zinc-900 px-3 py-1.5 text-sm text-white disabled:opacity-60"
+        className={`self-start ${UI_PRIMARY_BUTTON_CLASS}`}
       >
         {pending ? "Закрываем…" : "Ответить и закрыть"}
       </button>

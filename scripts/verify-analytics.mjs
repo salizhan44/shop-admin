@@ -11,10 +11,16 @@ import {
   toSalesSummary,
 } from "../src/lib/analytics.shared";
 import {
+  UNCATEGORIZED_CATALOG_FILTER_ID,
+  UNCATEGORIZED_SUBCATEGORY_FILTER_ID,
+  filterCatalogProducts,
+  groupCatalogProductsByCategory,
   groupWarehouseProductsByCategory,
   toWarehouseSnapshot,
 } from "../src/lib/products.shared";
 import { canAccessAnalytics, canViewWarehouseStockPage } from "../src/lib/roles.shared";
+import { orderStatusLabel, orderStatusTone } from "../src/lib/orders.shared";
+import { statusBadgeClass } from "../src/lib/ui.shared";
 
 const summary = toSalesSummary({
   confirmedOrderCount: 2,
@@ -120,6 +126,100 @@ assert.equal(grouped[0]?.products.length, 2);
 assert.equal(grouped[0]?.totalUnits, 3);
 assert.equal(grouped[1]?.name, "Без категории");
 
+function sampleCatalogProduct(overrides) {
+  return {
+    id: "x",
+    name: "X",
+    description: "",
+    priceCents: 100,
+    imageUrl: "",
+    categoryId: null,
+    subcategoryId: null,
+    isActive: true,
+    stockQuantity: 1,
+    costCents: 0,
+    categoryName: null,
+    subcategoryName: null,
+    ...overrides,
+  };
+}
+
+const catalogGroups = groupCatalogProductsByCategory([
+  sampleCatalogProduct({
+    id: "a",
+    name: "A",
+    categoryId: "flour",
+    categoryName: "МУКА",
+    subcategoryId: "premium",
+    subcategoryName: "Высший сорт",
+  }),
+  sampleCatalogProduct({
+    id: "c",
+    name: "C",
+    categoryId: "flour",
+    categoryName: "МУКА",
+  }),
+  sampleCatalogProduct({
+    id: "b",
+    name: "B",
+  }),
+]);
+assert.equal(catalogGroups[0]?.name, "МУКА");
+assert.equal(catalogGroups[0]?.products.length, 2);
+assert.equal(catalogGroups[0]?.subgroups[0]?.name, "Высший сорт");
+assert.equal(catalogGroups[0]?.subgroups[1]?.name, "Без подкатегории");
+assert.equal(catalogGroups[1]?.name, "Без категории");
+assert.equal(catalogGroups[1]?.key, UNCATEGORIZED_CATALOG_FILTER_ID);
+
+const onlyFlour = filterCatalogProducts(
+  [
+    sampleCatalogProduct({
+      id: "a",
+      categoryId: "flour",
+      categoryName: "МУКА",
+      subcategoryId: "premium",
+      subcategoryName: "Высший сорт",
+    }),
+    sampleCatalogProduct({ id: "b" }),
+  ],
+  "flour",
+  null,
+);
+assert.equal(onlyFlour.length, 1);
+assert.equal(onlyFlour[0]?.id, "a");
+
+const uncategorizedOnly = filterCatalogProducts(
+  [
+    sampleCatalogProduct({ id: "a", categoryId: "flour", categoryName: "МУКА" }),
+    sampleCatalogProduct({ id: "b" }),
+  ],
+  UNCATEGORIZED_CATALOG_FILTER_ID,
+  null,
+);
+assert.equal(uncategorizedOnly.length, 1);
+assert.equal(uncategorizedOnly[0]?.id, "b");
+
+const bySub = filterCatalogProducts(
+  [
+    sampleCatalogProduct({
+      id: "a",
+      categoryId: "flour",
+      categoryName: "МУКА",
+      subcategoryId: "premium",
+      subcategoryName: "Высший сорт",
+    }),
+    sampleCatalogProduct({
+      id: "c",
+      categoryId: "flour",
+      categoryName: "МУКА",
+    }),
+  ],
+  "flour",
+  UNCATEGORIZED_SUBCATEGORY_FILTER_ID,
+);
+assert.equal(bySub.length, 1);
+assert.equal(bySub[0]?.id, "c");
+
 const warehouse = toWarehouseSnapshot(
   [
     {
@@ -174,5 +274,11 @@ assert.equal(
   }),
   406,
 );
+
+assert.equal(orderStatusLabel("PENDING"), "Ожидает");
+assert.equal(orderStatusTone("PENDING"), "pending");
+assert.equal(orderStatusTone("CONFIRMED"), "ok");
+assert.equal(orderStatusTone("REJECTED"), "bad");
+assert.ok(statusBadgeClass("pending").includes("amber"));
 
 console.log("analytics invariants ok");

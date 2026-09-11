@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ApiErrorBody } from "@/lib/auth.shared";
+import { UI_SECONDARY_BUTTON_CLASS } from "@/lib/ui.shared";
 
 export function PromoActiveToggle(props: {
   promoId: string;
@@ -40,7 +41,7 @@ export function PromoActiveToggle(props: {
         type="button"
         onClick={() => void onToggle()}
         disabled={pending}
-        className="rounded border border-zinc-300 bg-white px-3 py-1.5 text-sm disabled:opacity-60"
+        className={UI_SECONDARY_BUTTON_CLASS}
       >
         {pending
           ? "Сохраняем…"
