@@ -6,6 +6,7 @@ import {
   filterStaffOrders,
   formatOrderDate,
   formatOrderShortId,
+  longestOrderStatusLabel,
   orderStatusLabel,
   type OrderStaffPublic,
   type OrderStatus,
@@ -21,9 +22,13 @@ import { RefreshWithUpdates } from "@/components/refresh-with-updates";
 import { OrderActions } from "./order-actions";
 import { OrderItemsModal } from "./order-items-modal";
 
-const TABLE_MIN_WIDTH_CLASS = "min-w-[62rem]";
-const ROW_GRID =
-  "grid w-full grid-cols-[6.5rem_minmax(8rem,1.2fr)_6.5rem_8.5rem_6.5rem_10rem_6.25rem] items-center gap-3 px-5";
+const TABLE_PAD = "px-[clamp(0.75rem,1.2vw,1.25rem)]";
+const TABLE_GAP = "gap-x-[clamp(0.5rem,1.5vw,1.25rem)]";
+const TABLE_INNER_CLASS = "w-max min-w-full";
+const TABLE_GRID = `grid w-full grid-cols-[minmax(min-content,0.7fr)_minmax(min-content,1.3fr)_minmax(min-content,0.7fr)_minmax(min-content,0.9fr)_minmax(min-content,0.7fr)_minmax(min-content,1fr)_minmax(min-content,auto)] ${TABLE_GAP} ${TABLE_PAD}`;
+const HEADER_CELL = "flex min-w-0 items-center whitespace-nowrap py-2.5 text-sm text-zinc-500";
+const DATA_ROW = `col-span-7 -mx-[clamp(0.75rem,1.2vw,1.25rem)] grid grid-cols-subgrid ${TABLE_PAD} border-t border-zinc-100 bg-white`;
+const DATA_CELL = "flex min-w-0 items-center py-3";
 const CELL_TEXT = "whitespace-nowrap text-sm";
 
 export function StaffOrdersList(props: {
@@ -115,60 +120,55 @@ export function StaffOrdersList(props: {
         ref={scrollerRef}
         className="min-w-0 overflow-x-hidden rounded-2xl bg-zinc-100 shadow-[0_10px_28px_rgba(6,30,58,0.10)] ring-1 ring-zinc-200/70"
       >
-        <div className={`${TABLE_MIN_WIDTH_CLASS} w-full`}>
-          <div className={`${ROW_GRID} bg-zinc-100 py-2.5 text-sm text-zinc-500`}>
-            <span className="whitespace-nowrap">ID</span>
-            <span className="whitespace-nowrap">Клиент</span>
-            <span className="whitespace-nowrap">Состав</span>
-            <span className="whitespace-nowrap">Статус</span>
-            <span className="whitespace-nowrap">Сумма</span>
-            <span className="whitespace-nowrap">Дата</span>
-            <span>
-              <span className="sr-only">Действия</span>
-            </span>
-          </div>
+        <div className={`${TABLE_INNER_CLASS} ${TABLE_GRID} bg-zinc-100`}>
+          <span className={HEADER_CELL}>ID</span>
+          <span className={HEADER_CELL}>Клиент</span>
+          <span className={`${HEADER_CELL} px-2`}>Состав</span>
+          <span className={`${HEADER_CELL} px-2`}>Статус</span>
+          <span className={HEADER_CELL}>Сумма</span>
+          <span className={HEADER_CELL}>Дата</span>
+          <span className={HEADER_CELL}>
+            <span className="sr-only">Действия</span>
+          </span>
           {visible.length === 0 ? (
-            <div className="bg-white px-5 py-8">
-              <p className={UI_MUTED_CLASS}>Нет заказов</p>
+            <div className={`${DATA_ROW} px-5 py-8`}>
+              <p className={`${UI_MUTED_CLASS} col-span-7`}>Нет заказов</p>
             </div>
           ) : (
-            <ul className="w-full bg-white">
-              {visible.map((order) => (
-                <li
-                  key={order.id}
-                  className={`${ROW_GRID} border-t border-zinc-100 py-3`}
-                >
-                  <p className={`${CELL_TEXT} font-medium text-zinc-900`}>
-                    {formatOrderShortId(order.id)}
-                  </p>
-                  <p className={`${CELL_TEXT} text-zinc-800`}>
-                    {order.customerName}
-                  </p>
-                  <div>
-                    <button
-                      type="button"
-                      onClick={() => setItemsOrder(order)}
-                      className="flex h-9 w-full items-center justify-center whitespace-nowrap rounded-xl bg-white px-2 text-sm font-medium text-zinc-800 ring-1 ring-zinc-200/80 transition hover:bg-zinc-50"
-                    >
-                      Состав
-                    </button>
-                  </div>
-                  <div>
-                    <OrderStatusChip status={order.status} />
-                  </div>
-                  <p className={`${CELL_TEXT} font-medium text-zinc-900`}>
-                    {formatPriceSomLabel(order.totalCents)}
-                  </p>
-                  <p className={`${CELL_TEXT} text-zinc-600`}>
-                    {formatOrderDate(order.createdAt)}
-                  </p>
+            visible.map((order) => (
+              <div key={order.id} className={DATA_ROW}>
+                <p className={`${DATA_CELL} ${CELL_TEXT} font-medium text-zinc-900`}>
+                  {formatOrderShortId(order.id)}
+                </p>
+                <p className={`${DATA_CELL} ${CELL_TEXT} text-zinc-800`}>
+                  {order.customerName}
+                </p>
+                <div className={DATA_CELL}>
+                  <button
+                    type="button"
+                    onClick={() => setItemsOrder(order)}
+                    className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-xl bg-white px-2 text-sm font-medium text-zinc-800 ring-1 ring-zinc-200/80 transition hover:bg-zinc-50"
+                  >
+                    Состав
+                  </button>
+                </div>
+                <div className={DATA_CELL}>
+                  <OrderStatusChip status={order.status} />
+                </div>
+                <p className={`${DATA_CELL} ${CELL_TEXT} font-medium text-zinc-900`}>
+                  {formatPriceSomLabel(order.totalCents)}
+                </p>
+                <p className={`${DATA_CELL} ${CELL_TEXT} text-zinc-600`}>
+                  {formatOrderDate(order.createdAt)}
+                </p>
+                <div className={`${DATA_CELL} justify-end`}>
                   <OrderActions
                     orderId={order.id}
                     disabled={order.status !== "PENDING"}
                   />
-                </li>
-              ))}
-            </ul>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -193,12 +193,17 @@ function OrderStatusChip(props: { status: OrderStatus }) {
   return (
     <span
       title={label}
-      className={`flex h-9 w-full items-center justify-center whitespace-nowrap rounded-xl px-2 text-sm font-medium ${toneClass}`}
+      className={`relative inline-flex h-9 items-center justify-center whitespace-nowrap rounded-xl px-2 text-sm font-medium ${toneClass}`}
       style={
         confirmed ? { backgroundColor: ORDER_CONFIRMED_COLOR } : undefined
       }
     >
-      {label}
+      <span className="invisible select-none" aria-hidden>
+        {longestOrderStatusLabel()}
+      </span>
+      <span className="absolute inset-0 flex items-center justify-center">
+        {label}
+      </span>
     </span>
   );
 }

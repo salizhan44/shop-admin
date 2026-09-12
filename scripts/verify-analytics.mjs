@@ -14,6 +14,7 @@ import {
   toSalesSummary,
 } from "../src/lib/analytics.shared";
 import {
+  ANALYTICS_TREND_UP_COLOR,
   analyticsTrendDirection,
   buildAnalyticsWeekSnapshot,
   formatWeekChangePercent,
@@ -43,6 +44,7 @@ import { canAccessAnalytics, canViewWarehouseStockPage } from "../src/lib/roles.
 import {
   filterStaffOrders,
   formatOrderShortId,
+  longestOrderStatusLabel,
   orderStatusLabel,
   orderStatusTone,
 } from "../src/lib/orders.shared";
@@ -65,6 +67,7 @@ import {
   staffPresenceStorageKey,
 } from "../src/lib/staff-presence.shared";
 import { filterStaffBySearch, isStaffUpdateBody } from "../src/lib/staff.shared";
+import { filterSupportTickets } from "../src/lib/support.shared";
 
 const summary = toSalesSummary({
   confirmedOrderCount: 2,
@@ -487,6 +490,7 @@ assert.equal(
 );
 
 assert.equal(orderStatusLabel("PENDING"), "Ожидает");
+assert.equal(longestOrderStatusLabel(), "Подтверждён");
 assert.equal(orderStatusTone("PENDING"), "pending");
 assert.equal(orderStatusTone("CONFIRMED"), "ok");
 assert.equal(orderStatusTone("REJECTED"), "bad");
@@ -550,5 +554,18 @@ assert.equal(isStaffUpdateBody({ name: "Алина" }), false);
 assert.equal(ADMIN_MENU_BG, "#061e3a");
 assert.equal(ADMIN_MENU_ACTIVE_BG, "#3a4758");
 assert.equal(ADMIN_MENU_ACTIVE_TEXT, "#d7b168");
+assert.equal(ANALYTICS_TREND_UP_COLOR, "#16a34a");
+assert.equal(
+  filterSupportTickets(
+    [{ status: "OPEN" }, { status: "CLOSED" }, { status: "OPEN" }],
+    "OPEN",
+  ).length,
+  2,
+);
+assert.equal(
+  filterSupportTickets([{ status: "OPEN" }, { status: "CLOSED" }], "CLOSED")
+    .length,
+  1,
+);
 
 console.log("analytics invariants ok");

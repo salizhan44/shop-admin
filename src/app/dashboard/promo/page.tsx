@@ -8,7 +8,6 @@ import {
   type PromoCodeAdmin,
 } from "@/lib/promo.shared";
 import { formatPriceSomLabel } from "@/lib/products.shared";
-import { PageHeader } from "@/components/page-header";
 import { AccessDenied } from "@/components/access-denied";
 import { StatusBadge } from "@/components/status-badge";
 import { UI_CARD_CLASS, UI_MUTED_CLASS } from "@/lib/ui.shared";
@@ -56,8 +55,7 @@ export default async function PromoPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader title="Промокоды" />
+    <div className="flex flex-col gap-5">
       <PromoForm products={products} />
       {promoCodes.length === 0 ? (
         <p className={UI_MUTED_CLASS}>Нет промокодов</p>

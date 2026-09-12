@@ -1,12 +1,19 @@
 import assert from "node:assert/strict";
 import {
+  DELETED_PROMO_CODE_PREFIX,
   computePromoDiscount,
+  deletedPromoCodeMarker,
+  isDeletedPromoCode,
   normalizePromoCode,
 } from "../src/lib/promo.shared";
 
 assert.equal(normalizePromoCode("  rola10 "), "ROLA10");
 assert.equal(normalizePromoCode("ab"), null);
 assert.equal(normalizePromoCode("BAD*CODE"), null);
+assert.equal(normalizePromoCode("DEL.abc123"), null);
+assert.equal(isDeletedPromoCode("ROLA10"), false);
+assert.equal(isDeletedPromoCode(`${DELETED_PROMO_CODE_PREFIX}abc`), true);
+assert.equal(deletedPromoCodeMarker("abc"), `${DELETED_PROMO_CODE_PREFIX}abc`);
 
 assert.equal(
   computePromoDiscount({

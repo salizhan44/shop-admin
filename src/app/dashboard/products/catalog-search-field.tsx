@@ -14,7 +14,7 @@ export function CatalogSearchField(props: {
       }}
     >
       <input
-        type="search"
+        type="text"
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
         placeholder="Поиск"

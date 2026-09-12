@@ -2,8 +2,11 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma.server";
 import { parsePriceToCents } from "./products.shared";
 import {
+  DELETED_PROMO_CODE_PREFIX,
   computePromoDiscount,
+  deletedPromoCodeMarker,
   describePromoQuote,
+  isDeletedPromoCode,
   isPromoCodeKind,
   normalizePromoCode,
   parseOptionalLimit,
@@ -37,6 +40,7 @@ export type PromoPlan = {
 
 export async function listPromoCodesForStaff(): Promise<PromoCodeAdmin[]> {
   const rows = await prisma.promoCode.findMany({
+    where: { NOT: { code: { startsWith: DELETED_PROMO_CODE_PREFIX } } },
     orderBy: { createdAt: "desc" },
     include: { freeProduct: { select: { name: true } } },
   });
@@ -120,9 +124,9 @@ export async function setPromoCodeActive(
 ): Promise<PromoCodeAdmin | { error: string; status: number }> {
   const existing = await prisma.promoCode.findUnique({
     where: { id: promoId },
-    select: { id: true },
+    select: { id: true, code: true },
   });
-  if (!existing) {
+  if (!existing || isDeletedPromoCode(existing.code)) {
     return { error: "Промокод не найден", status: 404 };
   }
   const updated = await prisma.promoCode.update({
@@ -133,7 +137,40 @@ export async function setPromoCodeActive(
   return toPromoCodeAdmin(updated);
 }
 
+export async function deletePromoCode(
+  promoId: string,
+): Promise<{ ok: true } | { error: string; status: number }> {
+  const existing = await prisma.promoCode.findUnique({
+    where: { id: promoId },
+    select: { id: true, code: true },
+  });
+  if (!existing || isDeletedPromoCode(existing.code)) {
+    return { error: "Промокод не найден", status: 404 };
+  }
+
+  await prisma.promoCode.update({
+    where: { id: promoId },
+    data: { isActive: false },
+  });
+
+  try {
+    await prisma.promoCode.delete({ where: { id: promoId } });
+  } catch {
+    await prisma.promoCode.update({
+      where: { id: promoId },
+      data: {
+        isActive: false,
+        code: deletedPromoCodeMarker(promoId),
+      },
+    });
+  }
+  return { ok: true };
+}
+
 async function loadUsablePromo(code: string) {
+  if (isDeletedPromoCode(code)) {
+    return null;
+  }
   return prisma.promoCode.findUnique({
     where: { code },
     include: {
@@ -238,6 +275,9 @@ export async function consumePromoInTransaction(
   if (!code) {
     return { error: "Введите корректный промокод", status: 400 };
   }
+  if (isDeletedPromoCode(code)) {
+    return { error: "Промокод не найден", status: 400 };
+  }
   const promo = await tx.promoCode.findUnique({
     where: { code },
     include: {
@@ -246,7 +286,7 @@ export async function consumePromoInTransaction(
       },
     },
   });
-  if (!promo || !promo.isActive) {
+  if (!promo || !promo.isActive || isDeletedPromoCode(promo.code)) {
     return { error: "Промокод не найден", status: 400 };
   }
   const usedByCustomer = await tx.promoRedemption.count({

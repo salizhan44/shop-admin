@@ -97,14 +97,24 @@ function MetricRow(props: {
 function TrendArrow(props: { direction: Exclude<AnalyticsTrendDirection, "flat"> }) {
   const down = props.direction === "down";
   return (
-    <svg viewBox="0 0 16 12" className="h-3 w-4" fill="none" aria-hidden>
-      <path
-        d={down ? "M1 2 L8 10 L15 4" : "M1 10 L8 2 L15 8"}
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none" aria-hidden>
+      {down ? (
+        <path
+          d="M6 2v8M3 7.5 6 10.5 9 7.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : (
+        <path
+          d="M6 10V2M3 4.5 6 1.5 9 4.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
     </svg>
   );
 }

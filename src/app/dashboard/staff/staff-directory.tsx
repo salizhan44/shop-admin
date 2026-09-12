@@ -96,7 +96,7 @@ export function StaffDirectory(props: { staff: StaffPublic[] }) {
           }}
         >
           <input
-            type="search"
+            type="text"
             value={searchDraft}
             onChange={(event) => setSearchDraft(event.target.value)}
             placeholder="Поиск"

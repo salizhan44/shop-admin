@@ -41,7 +41,7 @@ export type CategoryWeekItem = {
 };
 
 export const ANALYTICS_WEEK_CATEGORY_LIMIT = 3;
-export const ANALYTICS_TREND_UP_COLOR = "#3378b3";
+export const ANALYTICS_TREND_UP_COLOR = "#16a34a";
 export const ANALYTICS_TREND_DOWN_COLOR = "#dc2626";
 
 export function emptyWeekTotals(): WeekTotals {

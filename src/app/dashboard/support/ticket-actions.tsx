@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ApiErrorBody } from "@/lib/auth.shared";
 import {
+  ADMIN_MENU_BG,
   UI_LABEL_CLASS,
-  UI_PRIMARY_BUTTON_CLASS,
   UI_TEXTAREA_CLASS,
 } from "@/lib/ui.shared";
 
@@ -57,9 +57,10 @@ export function TicketActions(props: { ticketId: string }) {
           void onClose();
         }}
         disabled={pending}
-        className={`self-start ${UI_PRIMARY_BUTTON_CLASS}`}
+        className="inline-flex items-center justify-center self-start rounded-xl px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60"
+        style={{ backgroundColor: ADMIN_MENU_BG }}
       >
-        {pending ? "Закрываем…" : "Ответить и закрыть"}
+        {pending ? "Отправляем…" : "Ответить"}
       </button>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
     </div>

@@ -90,6 +90,17 @@ export function isPromoActiveBody(value: unknown): value is PromoActiveBody {
   return typeof body.isActive === "boolean";
 }
 
+/** Служебный префикс скрытых промокодов; через форму такой код создать нельзя. */
+export const DELETED_PROMO_CODE_PREFIX = "DEL.";
+
+export function isDeletedPromoCode(code: string): boolean {
+  return code.startsWith(DELETED_PROMO_CODE_PREFIX);
+}
+
+export function deletedPromoCodeMarker(promoId: string): string {
+  return `${DELETED_PROMO_CODE_PREFIX}${promoId}`;
+}
+
 export function normalizePromoCode(raw: string): string | null {
   const code = raw.trim().toUpperCase().replace(/\s+/g, "");
   if (code.length < 3 || code.length > 32) {

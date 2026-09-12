@@ -52,39 +52,48 @@ export function OverviewMonthChart(props: { months: MonthlySalesRow[] }) {
         <p className={UI_MUTED_CLASS}>Нет данных</p>
       ) : (
         <div className="min-w-0">
-          <div className="flex items-end gap-3">
-            <div
-              className={`flex w-16 shrink-0 flex-col justify-between text-right text-[10px] leading-none text-zinc-400 ${PLOT_HEIGHT_CLASS}`}
-            >
-              <span>{formatPriceSomLabel(maxCents)}</span>
-              <span>{formatPriceSomLabel(Math.round(maxCents / 2))}</span>
-              <span>0</span>
+          <div className={`relative flex ${PLOT_HEIGHT_CLASS} gap-3`}>
+            <div className="relative w-16 shrink-0 text-right text-[10px] leading-none text-zinc-400">
+              <span className="absolute right-0 top-0 -translate-y-1/2">
+                {formatPriceSomLabel(maxCents)}
+              </span>
+              <span className="absolute right-0 top-1/2 -translate-y-1/2">
+                {formatPriceSomLabel(Math.round(maxCents / 2))}
+              </span>
+              <span className="absolute right-0 bottom-0 translate-y-1/2">
+                0
+              </span>
             </div>
-            <ul
-              className={`flex min-w-0 flex-1 items-end gap-1.5 sm:gap-2 ${PLOT_HEIGHT_CLASS}`}
-            >
-              {props.months.map((row) => (
-                <li
-                  key={row.month}
-                  className="flex h-full min-w-0 flex-1 items-end justify-center gap-0.5 sm:gap-1"
-                  title={`${formatPriceSomLabel(row.revenueCents)} выручка · ${formatSignedSomLabel(row.profitCents)} прибыль`}
-                  onPointerEnter={() => setActiveMonth(row.month)}
-                  onPointerLeave={() => setActiveMonth(null)}
-                >
-                  <MonthBar
-                    tone="revenue"
-                    percent={overviewBarWidthPercent(row.revenueCents, maxCents)}
-                  />
-                  <MonthBar
-                    tone="profit"
-                    percent={overviewBarWidthPercent(
-                      Math.max(0, row.profitCents),
-                      maxCents,
-                    )}
-                  />
-                </li>
-              ))}
-            </ul>
+            <div className="relative min-w-0 flex-1">
+              <div className="pointer-events-none absolute inset-0">
+                <span className="absolute inset-x-0 top-0 h-px bg-zinc-300" />
+                <span className="absolute inset-x-0 top-1/2 h-px -translate-y-px bg-zinc-300" />
+                <span className="absolute inset-x-0 bottom-0 h-px bg-zinc-300" />
+              </div>
+              <ul className="relative flex h-full items-end gap-1.5 sm:gap-2">
+                {props.months.map((row) => (
+                  <li
+                    key={row.month}
+                    className="flex h-full min-w-0 flex-1 items-end justify-center gap-0.5 sm:gap-1"
+                    title={`${formatPriceSomLabel(row.revenueCents)} выручка · ${formatSignedSomLabel(row.profitCents)} прибыль`}
+                    onPointerEnter={() => setActiveMonth(row.month)}
+                    onPointerLeave={() => setActiveMonth(null)}
+                  >
+                    <MonthBar
+                      tone="revenue"
+                      percent={overviewBarWidthPercent(row.revenueCents, maxCents)}
+                    />
+                    <MonthBar
+                      tone="profit"
+                      percent={overviewBarWidthPercent(
+                        Math.max(0, row.profitCents),
+                        maxCents,
+                      )}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
           <ul className="mt-2 flex gap-1.5 pl-[4.75rem] sm:gap-2">
             {props.months.map((row) => (

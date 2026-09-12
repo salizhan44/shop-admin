@@ -91,9 +91,9 @@ export function DashboardShell(props: {
   );
 
   return (
-    <div className="min-h-screen min-w-0 overflow-x-hidden bg-zinc-100 lg:flex">
+    <div className="min-h-screen min-w-0 bg-zinc-100 lg:flex lg:h-screen lg:overflow-hidden">
       <aside
-        className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-white/10 lg:flex"
+        className="hidden h-full w-60 shrink-0 flex-col border-r border-white/10 lg:flex"
         style={{ backgroundColor: ADMIN_MENU_BG }}
       >
         {logo}
@@ -127,7 +127,7 @@ export function DashboardShell(props: {
         </div>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto">
         <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-zinc-200 bg-white px-4 py-3">
           <button
             type="button"

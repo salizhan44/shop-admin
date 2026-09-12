@@ -139,3 +139,23 @@ export function supportTicketStatusTone(
 export function formatSupportTicketDate(iso: string): string {
   return new Date(iso).toLocaleString("ru-RU");
 }
+
+export type SupportTicketListFilter = SupportTicketStatus;
+
+export type SupportTicketListFilterOption = {
+  value: SupportTicketListFilter;
+  label: string;
+};
+
+export const SUPPORT_TICKET_LIST_FILTERS: readonly SupportTicketListFilterOption[] =
+  [
+    { value: "OPEN", label: "Открытые" },
+    { value: "CLOSED", label: "Закрытые" },
+  ];
+
+export function filterSupportTickets<T extends { status: SupportTicketStatus }>(
+  tickets: readonly T[],
+  filter: SupportTicketListFilter,
+): T[] {
+  return tickets.filter((ticket) => ticket.status === filter);
+}

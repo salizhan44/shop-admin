@@ -143,6 +143,12 @@ export function orderStatusLabel(status: OrderStatus): string {
   }
 }
 
+export function longestOrderStatusLabel(): string {
+  return ORDER_STATUSES.map(orderStatusLabel).reduce((longest, label) =>
+    label.length > longest.length ? label : longest,
+  );
+}
+
 export function orderStatusTone(status: OrderStatus): StatusTone {
   switch (status) {
     case "PENDING":
