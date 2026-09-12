@@ -26,6 +26,16 @@ export const UI_LABEL_CLASS = "flex flex-col gap-1.5 text-sm text-zinc-700";
 
 export const UI_MUTED_CLASS = "text-sm text-zinc-500";
 
+/** Боковое меню админки. */
+export const ADMIN_MENU_BG = "#061e3a";
+export const ADMIN_MENU_ACTIVE_BG = "#3a4758";
+export const ADMIN_MENU_TEXT = "#ffffff";
+export const ADMIN_MENU_ACTIVE_TEXT = "#d7b168";
+/** Подтверждённый заказ и кнопка подтверждения. */
+export const ORDER_CONFIRMED_COLOR = "#3378b3";
+/** `rounded-xl` (12px) минус 40% скругления. */
+export const ADMIN_MENU_ACTIVE_RADIUS_CLASS = "rounded-[0.45rem]";
+
 export function statusBadgeClass(tone: StatusTone): string {
   switch (tone) {
     case "pending":

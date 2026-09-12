@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 
-export function LogoutButton() {
+export function LogoutButton(props: { className?: string }) {
   const router = useRouter();
 
   async function onClick() {
@@ -15,7 +15,10 @@ export function LogoutButton() {
     <button
       type="button"
       onClick={onClick}
-      className="rounded-xl px-3 py-1.5 text-sm font-medium text-zinc-700 ring-1 ring-zinc-200/80 transition hover:bg-zinc-50"
+      className={
+        props.className ??
+        "rounded-xl px-3 py-1.5 text-sm font-medium text-zinc-700 ring-1 ring-zinc-200/80 transition hover:bg-zinc-50"
+      }
     >
       Выйти
     </button>

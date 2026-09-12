@@ -4,21 +4,30 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ApiErrorBody } from "@/lib/auth.shared";
 import {
+  ORDER_CONFIRMED_COLOR,
   UI_DANGER_BUTTON_CLASS,
-  UI_PRIMARY_BUTTON_CLASS,
+  UI_LABEL_CLASS,
   UI_SECONDARY_BUTTON_CLASS,
   UI_TEXTAREA_CLASS,
-  UI_LABEL_CLASS,
 } from "@/lib/ui.shared";
+import { ModalDialog } from "@/components/modal-dialog";
 
-export function OrderActions(props: { orderId: string }) {
+export function OrderActions(props: {
+  orderId: string;
+  disabled: boolean;
+}) {
   const router = useRouter();
   const [reason, setReason] = useState("");
   const [rejectOpen, setRejectOpen] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState<"confirm" | "reject" | null>(null);
+  const busy = pending !== null;
+  const inactive = props.disabled || busy;
 
   async function onConfirm() {
+    if (inactive) {
+      return;
+    }
     setError("");
     setPending("confirm");
     try {
@@ -39,6 +48,9 @@ export function OrderActions(props: { orderId: string }) {
   }
 
   async function onReject() {
+    if (props.disabled || busy) {
+      return;
+    }
     setError("");
     setPending("reject");
     try {
@@ -63,29 +75,52 @@ export function OrderActions(props: { orderId: string }) {
   }
 
   return (
-    <div className="mt-4 flex flex-col gap-3 border-t border-zinc-100 pt-4">
-      <div className="flex flex-wrap gap-2">
+    <div className="flex min-w-0 flex-col items-end gap-1">
+      <div className="flex items-center gap-1.5">
         <button
           type="button"
+          aria-label="Подтвердить"
+          disabled={inactive}
           onClick={() => {
             void onConfirm();
           }}
-          disabled={pending !== null}
-          className={UI_PRIMARY_BUTTON_CLASS}
+          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition ${
+            inactive
+              ? "bg-zinc-200 text-zinc-400"
+              : "text-white hover:opacity-90"
+          }`}
+          style={
+            inactive ? undefined : { backgroundColor: ORDER_CONFIRMED_COLOR }
+          }
         >
-          {pending === "confirm" ? "Подтверждаем…" : "Подтвердить"}
+          <CheckIcon />
         </button>
         <button
           type="button"
-          onClick={() => setRejectOpen((current) => !current)}
-          disabled={pending !== null}
-          className={UI_DANGER_BUTTON_CLASS}
+          aria-label="Отклонить"
+          disabled={inactive}
+          onClick={() => setRejectOpen(true)}
+          className={`inline-flex h-9 w-9 items-center justify-center rounded-xl transition ${
+            inactive
+              ? "bg-zinc-200 text-zinc-400"
+              : "bg-red-600 text-white hover:opacity-90"
+          }`}
         >
-          Отклонить
+          <CrossIcon />
         </button>
       </div>
-      {rejectOpen ? (
-        <div className="flex flex-col gap-2">
+      {error ? <p className="max-w-40 text-right text-xs text-red-700">{error}</p> : null}
+
+      <ModalDialog
+        open={rejectOpen}
+        title="Отклонить заказ"
+        onClose={() => {
+          if (!busy) {
+            setRejectOpen(false);
+          }
+        }}
+      >
+        <div className="flex flex-col gap-3">
           <label className={UI_LABEL_CLASS}>
             Причина
             <textarea
@@ -100,7 +135,7 @@ export function OrderActions(props: { orderId: string }) {
               onClick={() => {
                 void onReject();
               }}
-              disabled={pending !== null}
+              disabled={busy}
               className={UI_DANGER_BUTTON_CLASS}
             >
               {pending === "reject" ? "Отклоняем…" : "Отклонить заказ"}
@@ -108,15 +143,41 @@ export function OrderActions(props: { orderId: string }) {
             <button
               type="button"
               onClick={() => setRejectOpen(false)}
-              disabled={pending !== null}
+              disabled={busy}
               className={UI_SECONDARY_BUTTON_CLASS}
             >
               Отмена
             </button>
           </div>
         </div>
-      ) : null}
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      </ModalDialog>
     </div>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden>
+      <path
+        d="M4.5 10.5 8 14l7.5-8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function CrossIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" aria-hidden>
+      <path
+        d="M5 5 15 15M15 5 5 15"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 }

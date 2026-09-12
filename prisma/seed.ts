@@ -204,6 +204,7 @@ async function main() {
       role: StaffRole.OWNER,
     },
   });
+  await ensureDemoStaff(passwordHash);
 
   await seedProducts();
   await ensureQuickCategories();
@@ -212,6 +213,44 @@ async function main() {
   await backfillOrderItemCosts();
   await ensurePromoCodes();
   await ensureDemoOrders(prisma);
+}
+
+async function ensureDemoStaff(passwordHash: string) {
+  const demoStaff = [
+    {
+      email: "alina.sklad@local.test",
+      name: "Алина Козлова",
+      role: StaffRole.WAREHOUSE,
+    },
+    {
+      email: "boris.buh@local.test",
+      name: "Борис Новиков",
+      role: StaffRole.ACCOUNTANT,
+    },
+    {
+      email: "vera.support@local.test",
+      name: "Вера Смирнова",
+      role: StaffRole.SUPPORT,
+    },
+    {
+      email: "dmitry.sklad@local.test",
+      name: "Дмитрий Орлов",
+      role: StaffRole.WAREHOUSE,
+    },
+  ] as const;
+
+  for (const member of demoStaff) {
+    await prisma.staffUser.upsert({
+      where: { email: member.email },
+      update: {},
+      create: {
+        email: member.email,
+        passwordHash,
+        name: member.name,
+        role: member.role,
+      },
+    });
+  }
 }
 
 async function ensurePromoCodes() {

@@ -258,3 +258,96 @@ export function chartScrollAfterZoom(input: {
   const nextContentX = padLeft + dataX * (input.newZoom / input.oldZoom);
   return Math.max(0, nextContentX - input.cursorOffsetX);
 }
+
+export type CategorySalesInput = {
+  categoryId: string | null;
+  categoryName: string | null;
+  revenueCents: number;
+};
+
+export type CategorySalesShare = {
+  categoryId: string;
+  categoryName: string;
+  revenueCents: number;
+  percent: number;
+};
+
+export const CATEGORY_SALES_CHART_COLORS = [
+  "#061e3a",
+  "#3378b3",
+  "#d7b168",
+  "#0f766e",
+  "#b45309",
+  "#7c3aed",
+  "#be123c",
+  "#3f6212",
+] as const;
+
+export function categoryChartColor(index: number): string {
+  return CATEGORY_SALES_CHART_COLORS[index % CATEGORY_SALES_CHART_COLORS.length];
+}
+
+export function formatCategorySalesPercent(percent: number): string {
+  const value = Math.round(percent * 10) / 10;
+  return `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1)}%`;
+}
+
+export function categorySalesPercents(revenues: number[]): number[] {
+  const total = revenues.reduce((sum, value) => sum + value, 0);
+  if (total <= 0) {
+    return revenues.map(() => 0);
+  }
+  const rounded = revenues.map(
+    (value) => Math.round((value / total) * 1000) / 10,
+  );
+  const drift =
+    Math.round((100 - rounded.reduce((sum, value) => sum + value, 0)) * 10) / 10;
+  if (rounded.length > 0 && drift !== 0) {
+    let maxIndex = 0;
+    for (let index = 1; index < rounded.length; index += 1) {
+      if ((rounded[index] ?? 0) > (rounded[maxIndex] ?? 0)) {
+        maxIndex = index;
+      }
+    }
+    rounded[maxIndex] = Math.round(((rounded[maxIndex] ?? 0) + drift) * 10) / 10;
+  }
+  return rounded;
+}
+
+export function aggregateCategorySales(
+  items: CategorySalesInput[],
+  uncategorizedLabel: string,
+  uncategorizedId: string,
+): CategorySalesShare[] {
+  const byKey = new Map<string, { categoryName: string; revenueCents: number }>();
+  for (const item of items) {
+    if (item.revenueCents <= 0) {
+      continue;
+    }
+    const categoryId = item.categoryId ?? uncategorizedId;
+    const categoryName = item.categoryName?.trim() || uncategorizedLabel;
+    const current = byKey.get(categoryId) ?? {
+      categoryName,
+      revenueCents: 0,
+    };
+    current.categoryName = categoryName;
+    current.revenueCents += item.revenueCents;
+    byKey.set(categoryId, current);
+  }
+  const rows = [...byKey.entries()]
+    .map(([categoryId, totals]) => ({
+      categoryId,
+      categoryName: totals.categoryName,
+      revenueCents: totals.revenueCents,
+    }))
+    .sort(
+      (left, right) =>
+        right.revenueCents - left.revenueCents ||
+        left.categoryName.localeCompare(right.categoryName, "ru"),
+    );
+  const percents = categorySalesPercents(rows.map((row) => row.revenueCents));
+  return rows.map((row, index) => ({
+    ...row,
+    percent: percents[index] ?? 0,
+  }));
+}

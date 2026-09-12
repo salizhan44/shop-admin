@@ -154,6 +154,34 @@ export function orderStatusTone(status: OrderStatus): StatusTone {
   }
 }
 
+export function formatOrderShortId(id: string): string {
+  return id.slice(-8).toUpperCase();
+}
+
+export type StaffOrderListFilter = "all" | OrderStatus;
+
+export type StaffOrderListFilterOption = {
+  value: StaffOrderListFilter;
+  label: string;
+};
+
+export const STAFF_ORDER_LIST_FILTERS: readonly StaffOrderListFilterOption[] = [
+  { value: "all", label: "Все" },
+  { value: "CONFIRMED", label: "Подтверждённые" },
+  { value: "PENDING", label: "Ожидающие" },
+  { value: "REJECTED", label: "Отклонённые" },
+];
+
+export function filterStaffOrders<T extends { status: OrderStatus }>(
+  orders: readonly T[],
+  filter: StaffOrderListFilter,
+): T[] {
+  if (filter === "all") {
+    return [...orders];
+  }
+  return orders.filter((order) => order.status === filter);
+}
+
 export function isRejectOrderBody(value: unknown): value is RejectOrderBody {
   if (typeof value !== "object" || value === null) {
     return false;

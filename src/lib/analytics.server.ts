@@ -1,11 +1,28 @@
 import { prisma } from "./prisma.server";
 import {
+  UNCATEGORIZED_CATALOG_FILTER_ID,
+  UNCATEGORIZED_WAREHOUSE_LABEL,
+} from "./products.shared";
+import {
+  ANALYTICS_WEEK_CATEGORY_LIMIT,
+  buildAnalyticsWeekSnapshot,
+  weekWindowDateKeys,
+  type AnalyticsWeekSnapshot,
+} from "./analytics-week.shared";
+import {
+  aggregateMonthlySales,
+  fillMonthlySalesRange,
+  type MonthlySalesRow,
+} from "./overview.shared";
+import {
+  aggregateCategorySales,
   aggregateDailySales,
   aggregateProductSales,
   fillDailySalesRange,
   sumLineCostCents,
   toReportDateKey,
   toSalesSummary,
+  type CategorySalesShare,
   type DailySalesRow,
   type ProductSalesRow,
   type SalesSummary,
@@ -89,4 +106,103 @@ export async function getDailySales(days: number): Promise<DailySalesRow[]> {
   );
 
   return fillDailySalesRange(aggregated, days);
+}
+
+export async function getMonthlySales(months: number): Promise<MonthlySalesRow[]> {
+  const end = new Date();
+  const since = new Date(end.getFullYear(), end.getMonth() - (months - 1), 1);
+
+  const orders = await prisma.order.findMany({
+    where: {
+      status: "CONFIRMED",
+      createdAt: { gte: since },
+    },
+    select: {
+      createdAt: true,
+      totalCents: true,
+      items: { select: { quantity: true, unitCostCents: true } },
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const aggregated = aggregateMonthlySales(
+    orders.map((order) => ({
+      createdAt: toReportDateKey(order.createdAt),
+      totalCents: order.totalCents,
+      costCents: sumLineCostCents(order.items),
+    })),
+  );
+
+  return fillMonthlySalesRange(aggregated, months, end);
+}
+
+export async function getCategorySalesShares(): Promise<CategorySalesShare[]> {
+  const items = await prisma.orderItem.findMany({
+    where: { order: { status: "CONFIRMED" } },
+    select: {
+      lineTotalCents: true,
+      product: {
+        select: {
+          categoryId: true,
+          category: { select: { name: true } },
+        },
+      },
+    },
+  });
+
+  return aggregateCategorySales(
+    items.map((item) => ({
+      categoryId: item.product.categoryId,
+      categoryName: item.product.category?.name ?? null,
+      revenueCents: item.lineTotalCents,
+    })),
+    UNCATEGORIZED_WAREHOUSE_LABEL,
+    UNCATEGORIZED_CATALOG_FILTER_ID,
+  );
+}
+
+export async function getAnalyticsWeekSnapshot(): Promise<AnalyticsWeekSnapshot> {
+  const window = weekWindowDateKeys();
+  const since = new Date();
+  since.setHours(0, 0, 0, 0);
+  since.setDate(since.getDate() - 13);
+
+  const [items, categories] = await Promise.all([
+    prisma.orderItem.findMany({
+      where: {
+        order: { status: "CONFIRMED", createdAt: { gte: since } },
+      },
+      select: {
+        lineTotalCents: true,
+        quantity: true,
+        unitCostCents: true,
+        order: { select: { createdAt: true } },
+        product: {
+          select: {
+            categoryId: true,
+            category: { select: { name: true } },
+          },
+        },
+      },
+    }),
+    prisma.category.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+
+  return buildAnalyticsWeekSnapshot(
+    items.map((item) => ({
+      categoryId: item.product.categoryId,
+      categoryName: item.product.category?.name ?? null,
+      date: toReportDateKey(item.order.createdAt),
+      revenueCents: item.lineTotalCents,
+      costCents: item.unitCostCents * item.quantity,
+    })),
+    categories,
+    UNCATEGORIZED_WAREHOUSE_LABEL,
+    UNCATEGORIZED_CATALOG_FILTER_ID,
+    window,
+    ANALYTICS_WEEK_CATEGORY_LIMIT,
+  );
 }

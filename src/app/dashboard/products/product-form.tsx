@@ -8,39 +8,46 @@ import type {
   ProductAdmin,
 } from "@/lib/products.shared";
 import { formatPriceSomInput } from "@/lib/products.shared";
-import { SelectField } from "@/components/select-field";
+import { ModalDialog } from "@/components/modal-dialog";
 import {
   UI_INPUT_CLASS,
   UI_LABEL_CLASS,
   UI_PRIMARY_BUTTON_CLASS,
-  UI_SECONDARY_BUTTON_CLASS,
 } from "@/lib/ui.shared";
-
-const CREATE_NEW = "__new__";
-const NONE = "";
+import { ProductDeleteButton } from "./product-delete-button";
+import { ProductImageField } from "./product-image-field";
+import {
+  PRODUCT_CATEGORY_CREATE_NEW,
+  PRODUCT_CATEGORY_NONE,
+  ProductCreateTaxonomyFields,
+} from "./product-create-taxonomy-fields";
 
 export function ProductForm(props: {
   categories: CategoryOptionPublic[];
   product?: ProductAdmin;
+  open: boolean;
+  onClose: () => void;
 }) {
   const router = useRouter();
   const isEdit = Boolean(props.product);
-  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [priceSom, setPriceSom] = useState("");
   const [costSom, setCostSom] = useState("0");
   const [stockQuantity, setStockQuantity] = useState("0");
-  const [categoryChoice, setCategoryChoice] = useState(NONE);
+  const [categoryChoice, setCategoryChoice] = useState(PRODUCT_CATEGORY_NONE);
   const [categoryName, setCategoryName] = useState("");
-  const [subcategoryChoice, setSubcategoryChoice] = useState(NONE);
+  const [subcategoryChoice, setSubcategoryChoice] = useState(
+    PRODUCT_CATEGORY_NONE,
+  );
   const [subcategoryName, setSubcategoryName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
   const selectedCategoryId =
-    categoryChoice !== NONE && categoryChoice !== CREATE_NEW
+    categoryChoice !== PRODUCT_CATEGORY_NONE &&
+    categoryChoice !== PRODUCT_CATEGORY_CREATE_NEW
       ? categoryChoice
       : "";
 
@@ -56,25 +63,30 @@ export function ProductForm(props: {
 
   const categoryOptions = useMemo(
     () => [
-      { value: NONE, label: "Без категории" },
+      { value: PRODUCT_CATEGORY_NONE, label: "Без категории" },
       ...props.categories.map((category) => ({
         value: category.id,
         label: category.name,
       })),
-      { value: CREATE_NEW, label: "Новая категория" },
+      { value: PRODUCT_CATEGORY_CREATE_NEW, label: "Новая категория" },
     ],
     [props.categories],
   );
 
   const subcategoryOptions = useMemo(() => {
-    const options = [{ value: NONE, label: "Без подкатегории" }];
-    if (categoryChoice !== CREATE_NEW) {
+    const options = [
+      { value: PRODUCT_CATEGORY_NONE, label: "Без подкатегории" },
+    ];
+    if (categoryChoice !== PRODUCT_CATEGORY_CREATE_NEW) {
       for (const subcategory of subcategories) {
         options.push({ value: subcategory.id, label: subcategory.name });
       }
     }
-    if (categoryChoice !== NONE) {
-      options.push({ value: CREATE_NEW, label: "Новая подкатегория" });
+    if (categoryChoice !== PRODUCT_CATEGORY_NONE) {
+      options.push({
+        value: PRODUCT_CATEGORY_CREATE_NEW,
+        label: "Новая подкатегория",
+      });
     }
     return options;
   }, [categoryChoice, subcategories]);
@@ -85,9 +97,9 @@ export function ProductForm(props: {
     setPriceSom(formatPriceSomInput(product.priceCents));
     setCostSom(formatPriceSomInput(product.costCents));
     setStockQuantity(String(product.stockQuantity));
-    setCategoryChoice(product.categoryId ?? NONE);
+    setCategoryChoice(product.categoryId ?? PRODUCT_CATEGORY_NONE);
     setCategoryName("");
-    setSubcategoryChoice(product.subcategoryId ?? NONE);
+    setSubcategoryChoice(product.subcategoryId ?? PRODUCT_CATEGORY_NONE);
     setSubcategoryName("");
     setImageUrl(product.imageUrl);
     setError("");
@@ -99,19 +111,24 @@ export function ProductForm(props: {
     setPriceSom("");
     setCostSom("0");
     setStockQuantity("0");
-    setCategoryChoice(NONE);
+    setCategoryChoice(PRODUCT_CATEGORY_NONE);
     setCategoryName("");
-    setSubcategoryChoice(NONE);
+    setSubcategoryChoice(PRODUCT_CATEGORY_NONE);
     setSubcategoryName("");
     setImageUrl("");
+    setError("");
   }
 
   useEffect(() => {
-    if (!open || !props.product) {
+    if (!props.open) {
       return;
     }
-    fillFromProduct(props.product);
-  }, [open, props.product]);
+    if (props.product) {
+      fillFromProduct(props.product);
+      return;
+    }
+    resetCreateForm();
+  }, [props.open, props.product]);
 
   function onPickImage(file: File | null) {
     if (!file) {
@@ -141,8 +158,10 @@ export function ProductForm(props: {
     setError("");
     setPending(true);
 
-    const creatingCategory = categoryChoice === CREATE_NEW;
-    const creatingSubcategory = subcategoryChoice === CREATE_NEW;
+    const creatingCategory =
+      !isEdit && categoryChoice === PRODUCT_CATEGORY_CREATE_NEW;
+    const creatingSubcategory =
+      !isEdit && subcategoryChoice === PRODUCT_CATEGORY_CREATE_NEW;
 
     if (creatingCategory && categoryName.trim().length === 0) {
       setError("Укажите название новой категории");
@@ -164,18 +183,32 @@ export function ProductForm(props: {
       return;
     }
 
-    const body = {
-      name,
-      description,
-      priceSom,
-      costSom,
-      stockQuantity,
-      categoryId: creatingCategory ? "" : selectedCategoryId,
-      categoryName: creatingCategory ? categoryName.trim() : "",
-      subcategoryId: creatingSubcategory ? "" : subcategoryChoice,
-      subcategoryName: creatingSubcategory ? subcategoryName.trim() : "",
-      imageUrl,
-    };
+    const body =
+      isEdit && props.product
+        ? {
+            name,
+            description,
+            priceSom,
+            costSom: formatPriceSomInput(props.product.costCents),
+            stockQuantity: String(props.product.stockQuantity),
+            categoryId: props.product.categoryId ?? "",
+            categoryName: "",
+            subcategoryId: props.product.subcategoryId ?? "",
+            subcategoryName: "",
+            imageUrl,
+          }
+        : {
+            name,
+            description,
+            priceSom,
+            costSom,
+            stockQuantity,
+            categoryId: creatingCategory ? "" : selectedCategoryId,
+            categoryName: creatingCategory ? categoryName.trim() : "",
+            subcategoryId: creatingSubcategory ? "" : subcategoryChoice,
+            subcategoryName: creatingSubcategory ? subcategoryName.trim() : "",
+            imageUrl,
+          };
 
     try {
       const response = await fetch(
@@ -206,7 +239,7 @@ export function ProductForm(props: {
       if (!isEdit) {
         resetCreateForm();
       }
-      setOpen(false);
+      props.onClose();
       router.refresh();
     } catch {
       setError("Нет связи с сервером");
@@ -215,164 +248,101 @@ export function ProductForm(props: {
     }
   }
 
-  const toggleClass = isEdit
-    ? UI_SECONDARY_BUTTON_CLASS
-    : UI_PRIMARY_BUTTON_CLASS;
-
   return (
-    <div className="flex flex-col gap-3">
-      <div>
-        <button
-          type="button"
-          onClick={() => setOpen((current) => !current)}
-          aria-expanded={open}
-          className={toggleClass}
-        >
-          {open
-            ? "Скрыть"
-            : isEdit
-              ? "Изменить"
-              : "Добавить товар"}
-        </button>
-      </div>
-
-      {open ? (
-        <form
-          onSubmit={onSubmit}
-          className="flex max-w-md flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200/70"
-        >
-          <label className={UI_LABEL_CLASS}>
-            Название
-            <input
-              required
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className={UI_INPUT_CLASS}
-            />
-          </label>
-          <label className={UI_LABEL_CLASS}>
-            Описание
-            <textarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              className={`min-h-20 ${UI_INPUT_CLASS}`}
-            />
-          </label>
-          <div className={UI_LABEL_CLASS}>
-            Фото
-            {imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={imageUrl}
-                alt=""
-                className="h-36 w-36 rounded-xl object-cover ring-1 ring-zinc-200/80"
-              />
-            ) : (
-              <p className="text-zinc-400">Нет фото</p>
-            )}
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(event) => {
-                onPickImage(event.target.files?.[0] ?? null);
-                event.target.value = "";
-              }}
-              className="text-sm text-zinc-600"
-            />
-            {imageUrl ? (
-              <button
-                type="button"
-                onClick={() => setImageUrl("")}
-                className="self-start text-sm text-zinc-500 underline"
-              >
-                Убрать
-              </button>
-            ) : null}
-          </div>
-          <label className={UI_LABEL_CLASS}>
-            Категория
-            <SelectField
-              value={categoryChoice}
-              options={categoryOptions}
-              onChange={(value) => {
-                setCategoryChoice(value);
-                setSubcategoryChoice(NONE);
+    <ModalDialog
+      open={props.open}
+      title={isEdit ? "Редактировать товар" : "Новый товар"}
+      onClose={props.onClose}
+    >
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <label className={UI_LABEL_CLASS}>
+          Название
+          <input
+            required
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            className={UI_INPUT_CLASS}
+          />
+        </label>
+        <label className={UI_LABEL_CLASS}>
+          Описание
+          <textarea
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            className={`min-h-20 ${UI_INPUT_CLASS}`}
+          />
+        </label>
+        <ProductImageField
+          imageUrl={imageUrl}
+          onPick={onPickImage}
+          onClear={() => setImageUrl("")}
+        />
+        {isEdit ? null : (
+          <ProductCreateTaxonomyFields
+            categoryChoice={categoryChoice}
+            categoryName={categoryName}
+            subcategoryChoice={subcategoryChoice}
+            subcategoryName={subcategoryName}
+            categoryOptions={categoryOptions}
+            subcategoryOptions={subcategoryOptions}
+            onCategoryChange={(value) => {
+              setCategoryChoice(value);
+              setSubcategoryChoice(PRODUCT_CATEGORY_NONE);
+              setSubcategoryName("");
+              if (value !== PRODUCT_CATEGORY_CREATE_NEW) {
+                setCategoryName("");
+              }
+            }}
+            onCategoryNameChange={setCategoryName}
+            onSubcategoryChange={(value) => {
+              setSubcategoryChoice(value);
+              if (value !== PRODUCT_CATEGORY_CREATE_NEW) {
                 setSubcategoryName("");
-                if (value !== CREATE_NEW) {
-                  setCategoryName("");
-                }
-              }}
-            />
-          </label>
-          {categoryChoice === CREATE_NEW ? (
+              }
+            }}
+            onSubcategoryNameChange={setSubcategoryName}
+          />
+        )}
+        <label className={UI_LABEL_CLASS}>
+          Цена, сом
+          <input
+            required
+            inputMode="decimal"
+            value={priceSom}
+            onChange={(event) => setPriceSom(event.target.value)}
+            className={UI_INPUT_CLASS}
+          />
+        </label>
+        {isEdit ? null : (
+          <>
             <label className={UI_LABEL_CLASS}>
-              Название категории
+              Себестоимость, сом
               <input
-                value={categoryName}
-                onChange={(event) => setCategoryName(event.target.value)}
+                required
+                inputMode="decimal"
+                value={costSom}
+                onChange={(event) => setCostSom(event.target.value)}
                 className={UI_INPUT_CLASS}
               />
             </label>
-          ) : null}
-          <label className={UI_LABEL_CLASS}>
-            Подкатегория
-            <SelectField
-              value={subcategoryChoice}
-              options={subcategoryOptions}
-              disabled={categoryChoice === NONE}
-              onChange={(value) => {
-                setSubcategoryChoice(value);
-                if (value !== CREATE_NEW) {
-                  setSubcategoryName("");
-                }
-              }}
-            />
-          </label>
-          {subcategoryChoice === CREATE_NEW ? (
             <label className={UI_LABEL_CLASS}>
-              Название подкатегории
+              Остаток, шт.
               <input
-                value={subcategoryName}
-                onChange={(event) => setSubcategoryName(event.target.value)}
+                required
+                inputMode="numeric"
+                value={stockQuantity}
+                onChange={(event) => setStockQuantity(event.target.value)}
                 className={UI_INPUT_CLASS}
               />
             </label>
-          ) : null}
-          <label className={UI_LABEL_CLASS}>
-            Цена, сом
-            <input
-              required
-              inputMode="decimal"
-              value={priceSom}
-              onChange={(event) => setPriceSom(event.target.value)}
-              className={UI_INPUT_CLASS}
-            />
-          </label>
-          <label className={UI_LABEL_CLASS}>
-            Себестоимость, сом
-            <input
-              required
-              inputMode="decimal"
-              value={costSom}
-              onChange={(event) => setCostSom(event.target.value)}
-              className={UI_INPUT_CLASS}
-            />
-          </label>
-          <label className={UI_LABEL_CLASS}>
-            Остаток, шт.
-            <input
-              required
-              inputMode="numeric"
-              value={stockQuantity}
-              onChange={(event) => setStockQuantity(event.target.value)}
-              className={UI_INPUT_CLASS}
-            />
-          </label>
-          {error ? <p className="text-sm text-red-700">{error}</p> : null}
+          </>
+        )}
+        {error ? <p className="text-sm text-red-700">{error}</p> : null}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <button
             type="submit"
             disabled={pending}
-            className={UI_PRIMARY_BUTTON_CLASS}
+            className={`flex-1 ${UI_PRIMARY_BUTTON_CLASS}`}
           >
             {pending
               ? "Сохраняем…"
@@ -380,9 +350,15 @@ export function ProductForm(props: {
                 ? "Сохранить"
                 : "Сохранить товар"}
           </button>
-        </form>
-      ) : null}
-    </div>
+          {isEdit && props.product ? (
+            <ProductDeleteButton
+              productId={props.product.id}
+              productName={props.product.name}
+              onDeleted={props.onClose}
+            />
+          ) : null}
+        </div>
+      </form>
+    </ModalDialog>
   );
 }
-

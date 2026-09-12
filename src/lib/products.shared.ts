@@ -236,6 +236,46 @@ export function filterCatalogProducts(
   });
 }
 
+/** Как в приложении: trim + lower case перед применением поиска. */
+export function normalizeCatalogSearchQuery(query: string): string {
+  return query.trim().toLowerCase();
+}
+
+export function isCatalogSearchSubsequence(text: string, query: string): boolean {
+  if (!query) {
+    return true;
+  }
+
+  const normalizedText = text.toLowerCase();
+  let queryIndex = 0;
+
+  for (
+    let textIndex = 0;
+    textIndex < normalizedText.length && queryIndex < query.length;
+    textIndex += 1
+  ) {
+    if (normalizedText[textIndex] === query[queryIndex]) {
+      queryIndex += 1;
+    }
+  }
+
+  return queryIndex === query.length;
+}
+
+export function filterCatalogProductsBySearch(
+  products: ProductAdmin[],
+  query: string,
+): ProductAdmin[] {
+  const normalized = normalizeCatalogSearchQuery(query);
+  if (!normalized) {
+    return products;
+  }
+
+  return products.filter((product) =>
+    isCatalogSearchSubsequence(product.name, normalized),
+  );
+}
+
 export type WarehouseCategoryGroup = {
   name: string;
   products: ProductWarehousePublic[];

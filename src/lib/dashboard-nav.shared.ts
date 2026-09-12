@@ -10,9 +10,21 @@ import {
   type StaffRole,
 } from "./roles.shared";
 
+export type DashboardNavIcon =
+  | "overview"
+  | "orders"
+  | "stock"
+  | "products"
+  | "promo"
+  | "staff"
+  | "support"
+  | "analytics"
+  | "accounting";
+
 export type DashboardNavItem = {
   href: string;
   label: string;
+  icon: DashboardNavIcon;
   /** Только точное совпадение пути (для «Обзор»). */
   exact?: boolean;
 };
@@ -23,54 +35,63 @@ const ALL_NAV_ITEMS: Array<
   {
     href: "/dashboard",
     label: "Обзор",
+    icon: "overview",
     exact: true,
     visible: () => true,
   },
   {
     href: "/dashboard/orders",
     label: "Заказы",
+    icon: "orders",
     visible: canAccessWarehouse,
   },
   {
     href: "/dashboard/stock",
     label: "Склад",
+    icon: "stock",
     visible: canViewWarehouseStockPage,
   },
   {
     href: "/dashboard/products",
     label: "Ассортимент",
+    icon: "products",
     visible: canManageCatalog,
   },
   {
     href: "/dashboard/promo",
     label: "Промокоды",
+    icon: "promo",
     visible: canManagePromotions,
   },
   {
     href: "/dashboard/staff",
     label: "Сотрудники",
+    icon: "staff",
     visible: canManageStaff,
   },
   {
     href: "/dashboard/support",
     label: "Поддержка",
+    icon: "support",
     visible: canAccessSupport,
   },
   {
     href: "/dashboard/analytics",
     label: "Аналитика",
+    icon: "analytics",
     visible: canAccessAnalytics,
   },
   {
     href: "/dashboard/accounting",
     label: "Учёт",
+    icon: "accounting",
     visible: canAccessAccounting,
   },
 ];
 
 export function getDashboardNavItems(role: StaffRole): DashboardNavItem[] {
   return ALL_NAV_ITEMS.filter((item) => item.visible(role)).map(
-    ({ href, label, exact }) => ({ href, label, exact }),
+    ({ href, label, icon, exact }) => ({ href, label, icon, exact }),
   );
 }
 

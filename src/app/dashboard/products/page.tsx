@@ -2,9 +2,7 @@ import { redirect } from "next/navigation";
 import { getStaffSession } from "@/lib/staff-session.server";
 import { canManageCatalog } from "@/lib/roles.shared";
 import { listCatalogProducts, listCategoriesForCatalog } from "@/lib/products.server";
-import { PageHeader } from "@/components/page-header";
 import { AccessDenied } from "@/components/access-denied";
-import { ProductForm } from "./product-form";
 import { CatalogProductList } from "./catalog-product-list";
 
 export default async function ProductsPage() {
@@ -27,9 +25,7 @@ export default async function ProductsPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-8">
-      <PageHeader title="Ассортимент" />
-      <ProductForm categories={categories} />
+    <div className="flex flex-col gap-6">
       <CatalogProductList products={products} categories={categories} />
     </div>
   );

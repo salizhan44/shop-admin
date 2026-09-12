@@ -161,7 +161,7 @@ export function SalesChart(props: { days: DailySalesRow[] }) {
   return (
     <div
       ref={frameRef}
-      className="w-full rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200/70 overscroll-contain sm:p-5"
+      className="flex h-full w-full flex-col rounded-2xl bg-white p-4 shadow-sm ring-1 ring-zinc-200/70 overscroll-contain sm:p-5"
     >
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-4 text-xs text-zinc-600">
@@ -188,7 +188,7 @@ export function SalesChart(props: { days: DailySalesRow[] }) {
           <p className="text-sm text-zinc-400">Наведите на день</p>
         )}
       </div>
-      <div className="relative">
+      <div className="relative min-h-0 flex-1">
         <div
           ref={viewportRef}
           className="w-full overflow-x-scroll overflow-y-hidden overscroll-x-contain [scrollbar-gutter:stable] [scrollbar-width:auto] [scrollbar-color:#a1a1aa_#f4f4f5] [&::-webkit-scrollbar]:h-3 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-zinc-100 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-400 hover:[&::-webkit-scrollbar-thumb]:bg-zinc-500"

@@ -8,6 +8,7 @@ import { UI_DANGER_BUTTON_CLASS } from "@/lib/ui.shared";
 export function ProductDeleteButton(props: {
   productId: string;
   productName: string;
+  onDeleted?: () => void;
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -34,6 +35,7 @@ export function ProductDeleteButton(props: {
         setError("error" in data ? data.error : "Не удалось удалить товар");
         return;
       }
+      props.onDeleted?.();
       router.refresh();
     } catch {
       setError("Нет связи с сервером");

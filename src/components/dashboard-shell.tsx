@@ -5,8 +5,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { DashboardNavItem } from "@/lib/dashboard-nav.shared";
 import { getDashboardPageTitle } from "@/lib/dashboard-nav.shared";
-import { LogoutButton } from "@/components/logout-button";
+import {
+  ADMIN_MENU_ACTIVE_BG,
+  ADMIN_MENU_ACTIVE_RADIUS_CLASS,
+  ADMIN_MENU_ACTIVE_TEXT,
+  ADMIN_MENU_BG,
+  ADMIN_MENU_TEXT,
+} from "@/lib/ui.shared";
 import { BrandLogo } from "@/components/brand-logo";
+import { DashboardNavIconMark } from "@/components/dashboard-nav-icon";
+import { StaffAccountMenu } from "@/components/staff-account-menu";
 
 export function DashboardShell(props: {
   staffName: string;
@@ -51,12 +59,24 @@ export function DashboardShell(props: {
           <Link
             key={item.href}
             href={item.href}
-            className={
+            className={`flex items-center gap-2.5 px-3 py-2 text-sm transition ${
               active
-                ? "rounded-xl bg-zinc-900 px-3 py-2 text-sm font-medium text-white"
-                : "rounded-xl px-3 py-2 text-sm text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900"
-            }
+                ? `${ADMIN_MENU_ACTIVE_RADIUS_CLASS} font-medium`
+                : "rounded-xl hover:bg-white/5"
+            }`}
+            style={{
+              backgroundColor: active ? ADMIN_MENU_ACTIVE_BG : undefined,
+              color: active ? ADMIN_MENU_ACTIVE_TEXT : ADMIN_MENU_TEXT,
+            }}
           >
+            <span
+              className="shrink-0 opacity-60"
+              style={{
+                color: active ? ADMIN_MENU_ACTIVE_TEXT : ADMIN_MENU_TEXT,
+              }}
+            >
+              <DashboardNavIconMark icon={item.icon} />
+            </span>
             {item.label}
           </Link>
         );
@@ -64,21 +84,20 @@ export function DashboardShell(props: {
     </nav>
   );
 
+  const logo = (
+    <div className="flex justify-center px-4 py-5">
+      <BrandLogo variant="menu" />
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-zinc-100 lg:flex">
-      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-zinc-200 bg-white lg:flex">
-        <div className="border-b border-zinc-200 px-4 py-4">
-          <BrandLogo />
-          <p className="mt-2 text-sm font-semibold text-zinc-900">
-            {props.roleLabel}
-          </p>
-        </div>
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-zinc-100 lg:flex">
+      <aside
+        className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-white/10 lg:flex"
+        style={{ backgroundColor: ADMIN_MENU_BG }}
+      >
+        {logo}
         <div className="min-h-0 flex-1 overflow-y-auto">{nav}</div>
-        <div className="border-t border-zinc-200 px-4 py-3">
-          <p className="truncate text-sm font-medium text-zinc-900">
-            {props.staffName}
-          </p>
-        </div>
       </aside>
 
       {menuOpen ? (
@@ -89,34 +108,26 @@ export function DashboardShell(props: {
             aria-label="Закрыть меню"
             onClick={() => setMenuOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 flex w-[min(100%,18rem)] flex-col bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
-              <div className="min-w-0">
-                <BrandLogo />
-                <p className="mt-2 text-sm font-semibold text-zinc-900">
-                  {props.roleLabel}
-                </p>
-              </div>
+          <aside
+            className="absolute inset-y-0 left-0 flex w-[min(100%,18rem)] flex-col shadow-xl"
+            style={{ backgroundColor: ADMIN_MENU_BG }}
+          >
+            <div className="relative border-b border-white/10">
+              {logo}
               <button
                 type="button"
                 onClick={() => setMenuOpen(false)}
-                className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm text-zinc-700"
+                className="absolute right-3 top-3 rounded-lg border border-white/25 px-2.5 py-1.5 text-sm text-white"
               >
                 Закрыть
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">{nav}</div>
-            <div className="border-t border-zinc-200 px-4 py-3">
-              <p className="truncate text-sm font-medium text-zinc-900">
-                {props.staffName}
-              </p>
-              <p className="truncate text-xs text-zinc-500">{props.staffEmail}</p>
-            </div>
           </aside>
         </div>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-zinc-200 bg-white px-4 py-3">
           <button
             type="button"
@@ -132,15 +143,19 @@ export function DashboardShell(props: {
             </span>
           </button>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-zinc-900 lg:hidden">
+            <p className="truncate text-lg font-semibold tracking-tight text-zinc-900">
               {pageTitle}
             </p>
           </div>
-          <LogoutButton />
+          <StaffAccountMenu
+            staffName={props.staffName}
+            staffEmail={props.staffEmail}
+            roleLabel={props.roleLabel}
+          />
         </header>
 
-        <main className="flex-1 px-4 py-8 sm:px-6 lg:px-10">
-          <div className="mx-auto w-full max-w-6xl">{props.children}</div>
+        <main className="min-w-0 flex-1 px-4 py-8 sm:px-6 lg:px-10">
+          <div className="mx-auto w-full min-w-0 max-w-6xl">{props.children}</div>
         </main>
       </div>
     </div>
