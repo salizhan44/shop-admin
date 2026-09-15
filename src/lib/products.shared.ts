@@ -8,6 +8,9 @@ export type ProductAdmin = ProductPublic & {
   categoryName: string | null;
   subcategoryId: string | null;
   subcategoryName: string | null;
+  listPriceCents: number;
+  discountPercent: number | null;
+  discountAmountCents: number | null;
 };
 
 export type ProductStockBody = {
@@ -67,6 +70,15 @@ export function isProductCreateBody(value: unknown): value is ProductCreateBody 
     return false;
   }
   if ("imageUrl" in body && typeof body.imageUrl !== "string") {
+    return false;
+  }
+  if ("discountKind" in body && typeof body.discountKind !== "string") {
+    return false;
+  }
+  if ("discountPercent" in body && typeof body.discountPercent !== "string") {
+    return false;
+  }
+  if ("discountSom" in body && typeof body.discountSom !== "string") {
     return false;
   }
   return true;

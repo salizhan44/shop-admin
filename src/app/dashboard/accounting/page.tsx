@@ -6,6 +6,7 @@ import {
   sumConfirmedRevenue,
   sumPendingTotal,
 } from "@/lib/accounting.shared";
+import { averageCheckCents } from "@/lib/analytics.shared";
 import {
   formatOrderDate,
   orderStatusLabel,
@@ -34,16 +35,27 @@ export default async function AccountingPage() {
   const orders = await listAccountingOrders();
   const confirmedRevenue = sumConfirmedRevenue(orders);
   const pendingTotal = sumPendingTotal(orders);
+  const confirmedCount = orders.filter(
+    (order) => order.status === "CONFIRMED",
+  ).length;
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader title="Учёт" />
 
-      <ul className="grid gap-3 sm:grid-cols-2">
+      <ul className="grid gap-3 sm:grid-cols-3">
         <li className={`${UI_CARD_CLASS} px-5 py-4`}>
           <p className="text-sm text-zinc-500">Выручка</p>
           <p className="mt-1 text-xl font-semibold tracking-tight text-zinc-900">
             {formatPriceSomLabel(confirmedRevenue)}
+          </p>
+        </li>
+        <li className={`${UI_CARD_CLASS} px-5 py-4`}>
+          <p className="text-sm text-zinc-500">Средний чек</p>
+          <p className="mt-1 text-xl font-semibold tracking-tight text-zinc-900">
+            {formatPriceSomLabel(
+              averageCheckCents(confirmedRevenue, confirmedCount),
+            )}
           </p>
         </li>
         <li className={`${UI_CARD_CLASS} px-5 py-4`}>

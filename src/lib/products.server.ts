@@ -8,6 +8,10 @@ import type {
   ProductWarehousePublic,
 } from "./products.shared";
 import { validateProductImageUrl } from "./products.shared";
+import {
+  compareAtCents,
+  salePriceCents,
+} from "./product-discount.shared";
 
 const PRODUCT_IMAGE_DIR = path.join(
   process.cwd(),
@@ -24,6 +28,8 @@ const productAdminSelect = {
   costCents: true,
   isActive: true,
   stockQuantity: true,
+  discountPercent: true,
+  discountAmountCents: true,
   imageUrl: true,
   categoryId: true,
   subcategoryId: true,
@@ -36,10 +42,40 @@ const productPublicSelect = {
   name: true,
   description: true,
   priceCents: true,
+  discountPercent: true,
+  discountAmountCents: true,
   imageUrl: true,
   categoryId: true,
   subcategoryId: true,
 } as const;
+
+function toPublicProduct(row: {
+  id: string;
+  name: string;
+  description: string;
+  priceCents: number;
+  discountPercent: number | null;
+  discountAmountCents: number | null;
+  imageUrl: string;
+  categoryId: string | null;
+  subcategoryId: string | null;
+}): ProductPublic {
+  const discount = {
+    priceCents: row.priceCents,
+    discountPercent: row.discountPercent,
+    discountAmountCents: row.discountAmountCents,
+  };
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    priceCents: salePriceCents(discount),
+    compareAtCents: compareAtCents(discount),
+    imageUrl: row.imageUrl,
+    categoryId: row.categoryId,
+    subcategoryId: row.subcategoryId,
+  };
+}
 
 function toProductAdmin(row: {
   id: string;
@@ -49,25 +85,27 @@ function toProductAdmin(row: {
   costCents: number;
   isActive: boolean;
   stockQuantity: number;
+  discountPercent: number | null;
+  discountAmountCents: number | null;
   imageUrl: string;
   categoryId: string | null;
   subcategoryId: string | null;
   category: { name: string } | null;
   subcategory: { name: string } | null;
 }): ProductAdmin {
+  const publicProduct = toPublicProduct(row);
   return {
-    id: row.id,
-    name: row.name,
-    description: row.description,
-    priceCents: row.priceCents,
-    costCents: row.costCents,
+    ...publicProduct,
     isActive: row.isActive,
     stockQuantity: row.stockQuantity,
-    imageUrl: row.imageUrl,
+    costCents: row.costCents,
     categoryId: row.categoryId,
     categoryName: row.category?.name ?? null,
     subcategoryId: row.subcategoryId,
     subcategoryName: row.subcategory?.name ?? null,
+    listPriceCents: row.priceCents,
+    discountPercent: row.discountPercent,
+    discountAmountCents: row.discountAmountCents,
   };
 }
 
@@ -143,11 +181,12 @@ async function resolveProductImageUrl(
 }
 
 export async function listActiveProducts(): Promise<ProductPublic[]> {
-  return prisma.product.findMany({
+  const rows = await prisma.product.findMany({
     where: { isActive: true },
     orderBy: { name: "asc" },
     select: productPublicSelect,
   });
+  return rows.map(toPublicProduct);
 }
 
 export async function listCatalogProducts(): Promise<ProductAdmin[]> {
@@ -286,6 +325,8 @@ export async function createCatalogProduct(input: {
   subcategoryId?: string;
   subcategoryName?: string;
   imageUrl?: string;
+  discountPercent?: number | null;
+  discountAmountCents?: number | null;
 }): Promise<ProductPublic | { error: string }> {
   const links = await resolveCategoryLinks(input);
   if ("error" in links) {
@@ -303,12 +344,14 @@ export async function createCatalogProduct(input: {
       imageUrl: "",
       categoryId: links.categoryId,
       subcategoryId: links.subcategoryId,
+      discountPercent: input.discountPercent ?? null,
+      discountAmountCents: input.discountAmountCents ?? null,
     },
     select: productPublicSelect,
   });
 
   if (!input.imageUrl || input.imageUrl.trim().length === 0) {
-    return created;
+    return toPublicProduct(created);
   }
 
   const imageUrl = await resolveProductImageUrl(
@@ -321,11 +364,12 @@ export async function createCatalogProduct(input: {
     return imageUrl;
   }
 
-  return prisma.product.update({
+  const updated = await prisma.product.update({
     where: { id: created.id },
     data: { imageUrl },
     select: productPublicSelect,
   });
+  return toPublicProduct(updated);
 }
 
 export async function updateCatalogProduct(
@@ -341,6 +385,8 @@ export async function updateCatalogProduct(
     subcategoryId?: string;
     subcategoryName?: string;
     imageUrl?: string;
+    discountPercent?: number | null;
+    discountAmountCents?: number | null;
   },
 ): Promise<ProductAdmin | { error: string; status: number }> {
   const existing = await prisma.product.findUnique({
@@ -376,6 +422,8 @@ export async function updateCatalogProduct(
       categoryId: links.categoryId,
       subcategoryId: links.subcategoryId,
       imageUrl,
+      discountPercent: input.discountPercent ?? null,
+      discountAmountCents: input.discountAmountCents ?? null,
     },
     select: productAdminSelect,
   });

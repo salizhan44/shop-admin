@@ -41,6 +41,7 @@ export function toCustomerPublic(customer: {
   homeAddress: string;
   avatarUrl: string;
   passwordHash: string | null;
+  loyaltyPoints: number;
 }): CustomerPublic {
   return {
     id: customer.id,
@@ -49,5 +50,6 @@ export function toCustomerPublic(customer: {
     homeAddress: customer.homeAddress,
     avatarUrl: customer.avatarUrl,
     hasPassword: customerHasPassword(customer.passwordHash),
+    loyaltyPoints: Math.max(0, customer.loyaltyPoints),
   };
 }

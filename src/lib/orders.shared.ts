@@ -22,6 +22,8 @@ export type OrderPublic = {
   status: OrderStatus;
   totalCents: number;
   discountCents: number;
+  pointsSpent: number;
+  pointsEarned: number;
   promoCode: string;
   phone: string;
   address: string;
@@ -42,6 +44,7 @@ export type OrderCheckoutBody = {
   address: string;
   comment: string;
   promoCode?: string;
+  pointsToSpend?: number;
 };
 
 export type RejectOrderBody = {
@@ -71,6 +74,8 @@ export function toOrderPublic(input: {
   status: OrderStatus;
   totalCents: number;
   discountCents?: number;
+  pointsSpent?: number;
+  pointsEarned?: number;
   promoCodeText?: string;
   phone: string;
   address: string;
@@ -91,6 +96,8 @@ export function toOrderPublic(input: {
     status: input.status,
     totalCents: input.totalCents,
     discountCents: input.discountCents ?? 0,
+    pointsSpent: input.pointsSpent ?? 0,
+    pointsEarned: input.pointsEarned ?? 0,
     promoCode: input.promoCodeText ?? "",
     phone: input.phone,
     address: input.address,
@@ -110,6 +117,8 @@ export function isOrderPublic(value: unknown): value is OrderPublic {
     status?: unknown;
     totalCents?: unknown;
     discountCents?: unknown;
+    pointsSpent?: unknown;
+    pointsEarned?: unknown;
     promoCode?: unknown;
     phone?: unknown;
     address?: unknown;
@@ -118,12 +127,17 @@ export function isOrderPublic(value: unknown): value is OrderPublic {
   };
   const discountCents =
     typeof body.discountCents === "number" ? body.discountCents : 0;
+  const pointsSpent = typeof body.pointsSpent === "number" ? body.pointsSpent : 0;
+  const pointsEarned =
+    typeof body.pointsEarned === "number" ? body.pointsEarned : 0;
   const promoCode = typeof body.promoCode === "string" ? body.promoCode : "";
   return (
     typeof body.id === "string" &&
     typeof body.status === "string" &&
     typeof body.totalCents === "number" &&
     discountCents >= 0 &&
+    pointsSpent >= 0 &&
+    pointsEarned >= 0 &&
     typeof promoCode === "string" &&
     typeof body.phone === "string" &&
     typeof body.address === "string" &&
@@ -211,6 +225,14 @@ export function isOrderCheckoutBody(value: unknown): value is OrderCheckoutBody 
   if ("promoCode" in body && typeof body.promoCode !== "string") {
     return false;
   }
+  if (
+    "pointsToSpend" in body &&
+    (typeof body.pointsToSpend !== "number" ||
+      !Number.isInteger(body.pointsToSpend) ||
+      body.pointsToSpend < 0)
+  ) {
+    return false;
+  }
   return true;
 }
 
@@ -268,6 +290,8 @@ export function toOrderStaffPublic(input: {
   status: OrderStatus;
   totalCents: number;
   discountCents?: number;
+  pointsSpent?: number;
+  pointsEarned?: number;
   promoCodeText?: string;
   phone: string;
   address: string;

@@ -8,6 +8,7 @@ import {
   type CategoryOptionPublic,
   type ProductAdmin,
 } from "@/lib/products.shared";
+import { productDiscountLabel } from "@/lib/product-discount.shared";
 import { ADMIN_MENU_BG, UI_MUTED_CLASS } from "@/lib/ui.shared";
 import { CatalogSearchField } from "./catalog-search-field";
 import { ProductForm } from "./product-form";
@@ -98,6 +99,7 @@ function ProductCard(props: {
   product: ProductAdmin;
   onEdit: () => void;
 }) {
+  const discountLabel = productDiscountLabel(props.product);
   return (
     <article
       className="flex h-full flex-col overflow-hidden rounded-2xl bg-white p-3 shadow-[0_10px_28px_rgba(6,30,58,0.10)]"
@@ -118,8 +120,26 @@ function ProductCard(props: {
         {props.product.name}
       </p>
       <p className="mt-1 text-sm text-zinc-700">
-        {formatPriceSomLabel(props.product.priceCents)}{" "}
-        <span className="text-zinc-500">{`(${formatPriceSomLabel(props.product.costCents)})`}</span>
+        {props.product.compareAtCents ? (
+          <>
+            <span className="mr-2 text-zinc-400 line-through">
+              {formatPriceSomLabel(props.product.listPriceCents)}
+            </span>
+            <span className="font-semibold text-zinc-900">
+              {formatPriceSomLabel(props.product.priceCents)}
+            </span>
+            {discountLabel ? (
+              <span className="ml-2 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-amber-100">
+                {discountLabel}
+              </span>
+            ) : null}
+          </>
+        ) : (
+          <>
+            {formatPriceSomLabel(props.product.listPriceCents)}{" "}
+            <span className="text-zinc-500">{`(${formatPriceSomLabel(props.product.costCents)})`}</span>
+          </>
+        )}
       </p>
       <div className="mt-auto flex items-end justify-between gap-2 pt-3">
         <p className="text-sm text-zinc-500">

@@ -1,4 +1,8 @@
 import type { ProductPublic } from "./auth.shared";
+import {
+  compareAtCents,
+  salePriceCents,
+} from "./product-discount.shared";
 
 export type CartLinePublic = {
   id: string;
@@ -6,6 +10,7 @@ export type CartLinePublic = {
   name: string;
   description: string;
   priceCents: number;
+  compareAtCents: number | null;
   imageUrl: string;
   quantity: number;
   lineTotalCents: number;
@@ -45,18 +50,32 @@ export function toCartLine(input: {
   quantity: number;
   product: Pick<
     ProductPublic,
-    "id" | "name" | "description" | "priceCents" | "imageUrl"
-  >;
+    "id" | "name" | "description" | "imageUrl"
+  > & {
+    priceCents: number;
+    discountPercent: number | null;
+    discountAmountCents: number | null;
+  };
 }): CartLinePublic {
+  const unitCents = salePriceCents({
+    priceCents: input.product.priceCents,
+    discountPercent: input.product.discountPercent,
+    discountAmountCents: input.product.discountAmountCents,
+  });
   return {
     id: input.id,
     productId: input.product.id,
     name: input.product.name,
     description: input.product.description,
-    priceCents: input.product.priceCents,
+    priceCents: unitCents,
+    compareAtCents: compareAtCents({
+      priceCents: input.product.priceCents,
+      discountPercent: input.product.discountPercent,
+      discountAmountCents: input.product.discountAmountCents,
+    }),
     imageUrl: input.product.imageUrl,
     quantity: input.quantity,
-    lineTotalCents: input.product.priceCents * input.quantity,
+    lineTotalCents: unitCents * input.quantity,
   };
 }
 

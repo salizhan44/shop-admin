@@ -12,6 +12,7 @@ import {
   chartScrollAfterZoom,
   sumLineCostCents,
   toSalesSummary,
+  averageCheckCents,
 } from "../src/lib/analytics.shared";
 import {
   ANALYTICS_TREND_UP_COLOR,
@@ -78,6 +79,7 @@ const summary = toSalesSummary({
   rejectedOrderCount: 0,
 });
 assert.equal(summary.confirmedProfitCents, 6000);
+assert.equal(averageCheckCents(summary.confirmedRevenueCents, summary.confirmedOrderCount), 5000);
 
 assert.equal(
   sumLineCostCents([

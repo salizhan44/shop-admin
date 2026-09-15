@@ -95,6 +95,7 @@ export async function getCustomerProfile(
       homeAddress: true,
       avatarUrl: true,
       passwordHash: true,
+      loyaltyPoints: true,
     },
   });
   if (!customer) {
@@ -168,6 +169,7 @@ export async function updateCustomerProfile(
         homeAddress: true,
         avatarUrl: true,
         passwordHash: true,
+        loyaltyPoints: true,
       },
     });
     const avatarUrl = await normalizeStoredAvatar(
@@ -239,4 +241,19 @@ export async function verifyCustomerPassword(
     currentPassword: body.currentPassword,
     currentPasswordMatches,
   });
+}
+
+export async function addCustomerAppSeconds(
+  customerId: string,
+  seconds: number,
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await prisma.customer.update({
+      where: { id: customerId },
+      data: { appSecondsTotal: { increment: seconds } },
+    });
+    return { ok: true };
+  } catch {
+    return { error: "Не удалось сохранить время" };
+  }
 }

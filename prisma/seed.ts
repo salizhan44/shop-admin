@@ -2,6 +2,7 @@ import { PrismaClient, StaffRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { groceryCostCents, ensureGroceryProducts } from "./seed-grocery";
 import { ensureDemoOrders, ensureDemoYearOrders } from "./seed-demo-orders";
+import { ensureLoyaltyDemoData } from "./seed-loyalty-demo";
 
 const prisma = new PrismaClient();
 
@@ -214,6 +215,7 @@ async function main() {
   await ensurePromoCodes();
   await ensureDemoOrders(prisma);
   await ensureDemoYearOrders(prisma);
+  await ensureLoyaltyDemoData(prisma);
 }
 
 async function ensureDemoStaff(passwordHash: string) {

@@ -4,6 +4,16 @@ import {
   isPromoError,
 } from "./promo.server";
 import {
+  awardEarnedPoints,
+  refundCustomerPoints,
+  spendCustomerPoints,
+} from "./loyalty.server";
+import {
+  clampLoyaltyPointsToSpend,
+  payableAfterLoyaltyCents,
+} from "./loyalty.shared";
+import { salePriceCents } from "./product-discount.shared";
+import {
   notifyOrderConfirmed,
   notifyOrderCreated,
   notifyOrderRejected,
@@ -19,13 +29,13 @@ const orderInclude = {
   items: true,
 } as const;
 
-class PromoCheckoutError extends Error {
-  readonly promoStatus: number;
+class CheckoutDomainError extends Error {
+  readonly status: number;
 
   constructor(message: string, status: number) {
     super(message);
-    this.name = "PromoCheckoutError";
-    this.promoStatus = status;
+    this.name = "CheckoutDomainError";
+    this.status = status;
   }
 }
 
@@ -51,6 +61,8 @@ export async function listOrdersForStaff(): Promise<OrderStaffPublic[]> {
       status: order.status,
       totalCents: order.totalCents,
       discountCents: order.discountCents,
+      pointsSpent: order.pointsSpent,
+      pointsEarned: order.pointsEarned,
       promoCodeText: order.promoCodeText,
       phone: order.phone,
       address: order.address,
@@ -128,11 +140,16 @@ export async function confirmOrder(
           data: { stockQuantity: { decrement: item.quantity } },
         });
       }
+      const earned = await awardEarnedPoints(tx, {
+        customerId: order.customerId,
+        cashPaidCents: order.totalCents,
+      });
       return tx.order.update({
         where: { id: orderId },
         data: {
           status: "CONFIRMED",
           rejectionReason: null,
+          pointsEarned: earned,
         },
         include: orderInclude,
       });
@@ -164,13 +181,17 @@ export async function rejectOrder(
     return { error: "Заказ уже обработан", status: 400 };
   }
 
-  const updated = await prisma.order.update({
-    where: { id: orderId },
-    data: {
-      status: "REJECTED",
-      rejectionReason: trimmed,
-    },
-    include: orderInclude,
+  const updated = await prisma.$transaction(async (tx) => {
+    const next = await tx.order.update({
+      where: { id: orderId },
+      data: {
+        status: "REJECTED",
+        rejectionReason: trimmed,
+      },
+      include: orderInclude,
+    });
+    await refundCustomerPoints(tx, order.customerId, order.pointsSpent);
+    return next;
   });
   const publicOrder = toOrderPublic(updated);
   void notifyOrderRejected(updated.customerId, updated.id, trimmed).catch(
@@ -188,6 +209,7 @@ export async function createOrderFromCart(
     address: string;
     comment: string | null;
     promoCode?: string;
+    pointsToSpend?: number;
   },
 ): Promise<OrderPublic | { error: string; status: number }> {
   const cart = await prisma.cart.findUnique({
@@ -201,6 +223,8 @@ export async function createOrderFromCart(
               name: true,
               priceCents: true,
               costCents: true,
+              discountPercent: true,
+              discountAmountCents: true,
               isActive: true,
             },
           },
@@ -223,14 +247,21 @@ export async function createOrderFromCart(
     }
   }
 
-  const lineInputs = cart.items.map((item) => ({
-    productId: item.product.id,
-    productName: item.product.name,
-    priceCents: item.product.priceCents,
-    unitCostCents: item.product.costCents,
-    quantity: item.quantity,
-    lineTotalCents: item.product.priceCents * item.quantity,
-  }));
+  const lineInputs = cart.items.map((item) => {
+    const unitCents = salePriceCents({
+      priceCents: item.product.priceCents,
+      discountPercent: item.product.discountPercent,
+      discountAmountCents: item.product.discountAmountCents,
+    });
+    return {
+      productId: item.product.id,
+      productName: item.product.name,
+      priceCents: unitCents,
+      unitCostCents: item.product.costCents,
+      quantity: item.quantity,
+      lineTotalCents: unitCents * item.quantity,
+    };
+  });
   const subtotalCents = lineInputs.reduce(
     (sum, item) => sum + item.lineTotalCents,
     0,
@@ -251,7 +282,7 @@ export async function createOrderFromCart(
           subtotalCents,
         });
         if (isPromoError(consumed)) {
-          throw new PromoCheckoutError(consumed.error, consumed.status);
+          throw new CheckoutDomainError(consumed.error, consumed.status);
         }
         discountCents = consumed.discountCents;
         promoCodeId = consumed.promoId;
@@ -261,17 +292,36 @@ export async function createOrderFromCart(
         }
       }
 
+      const afterPromoCents = Math.max(0, subtotalCents - discountCents);
+      const customer = await tx.customer.findUnique({
+        where: { id: customerId },
+        select: { loyaltyPoints: true },
+      });
+      if (!customer) {
+        throw new CheckoutDomainError("Клиент не найден", 404);
+      }
+      const pointsSpent = clampLoyaltyPointsToSpend({
+        requested: delivery.pointsToSpend ?? 0,
+        balance: customer.loyaltyPoints,
+        payableCents: afterPromoCents,
+      });
+      const spent = await spendCustomerPoints(tx, customerId, pointsSpent);
+      if ("error" in spent) {
+        throw new CheckoutDomainError(spent.error, spent.status);
+      }
+
       const created = await tx.order.create({
         data: {
           customerId,
           status: "PENDING",
-          totalCents: Math.max(0, subtotalCents - discountCents),
+          totalCents: payableAfterLoyaltyCents(afterPromoCents, pointsSpent),
           discountCents,
-          promoCodeId,
-          promoCodeText,
+          pointsSpent,
           phone: delivery.phone,
           address: delivery.address,
           comment: delivery.comment,
+          promoCodeId,
+          promoCodeText,
           items: {
             create: itemsToCreate,
           },
@@ -298,8 +348,8 @@ export async function createOrderFromCart(
     });
     return publicOrder;
   } catch (caught) {
-    if (caught instanceof PromoCheckoutError) {
-      return { error: caught.message, status: caught.promoStatus };
+    if (caught instanceof CheckoutDomainError) {
+      return { error: caught.message, status: caught.status };
     }
     throw caught;
   }

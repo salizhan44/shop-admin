@@ -51,6 +51,10 @@ model Customer {
   name          String
   homeAddress   String          @default("")
   avatarUrl     String          @default("")
+  /** 1 балл = 1 сом при оплате. */
+  loyaltyPoints Int             @default(0)
+  /** Суммарное время в приложении, секунды. */
+  appSecondsTotal Int           @default(0)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   refreshTokens RefreshToken[]
@@ -92,6 +96,10 @@ model Product {
   priceCents     Int
   /** Закупочная себестоимость единицы, в тыйынах. */
   costCents      Int          @default(0)
+  /** Скидка в процентах (1–70). Не сочетается с discountAmountCents. */
+  discountPercent     Int?
+  /** Скидка фиксированной суммой, в тыйынах. Не сочетается с discountPercent. */
+  discountAmountCents Int?
   stockQuantity  Int          @default(0)
   isActive       Boolean      @default(true)
   imageUrl       String       @default("")
@@ -138,6 +146,10 @@ model Order {
   status          OrderStatus @default(PENDING)
   totalCents      Int
   discountCents   Int         @default(0)
+  /** Сколько баллов списали при оформлении. */
+  pointsSpent     Int         @default(0)
+  /** Сколько баллов начислили при подтверждении. */
+  pointsEarned    Int         @default(0)
   promoCodeId     String?
   promoCode       PromoCode?  @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
   promoCodeText   String      @default("")

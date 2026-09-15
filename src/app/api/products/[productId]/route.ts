@@ -11,6 +11,7 @@ import {
   parsePriceToCents,
   parseStockQuantity,
 } from "@/lib/products.shared";
+import { parseProductDiscount } from "@/lib/product-discount.shared";
 import type { ApiErrorBody } from "@/lib/auth.shared";
 
 export async function PATCH(
@@ -59,6 +60,19 @@ export async function PATCH(
     );
   }
 
+  const discount = parseProductDiscount({
+    kind: json.discountKind ?? "none",
+    percentText: json.discountPercent ?? "",
+    amountSom: json.discountSom ?? "",
+    priceCents,
+  });
+  if ("error" in discount) {
+    return Response.json(
+      { error: discount.error } satisfies ApiErrorBody,
+      { status: 400 },
+    );
+  }
+
   const { productId } = await context.params;
   const result = await updateCatalogProduct(productId, {
     name,
@@ -71,6 +85,8 @@ export async function PATCH(
     subcategoryId: json.subcategoryId,
     subcategoryName: json.subcategoryName,
     imageUrl: json.imageUrl,
+    discountPercent: discount.discountPercent,
+    discountAmountCents: discount.discountAmountCents,
   });
   if (isProductError(result)) {
     return Response.json(

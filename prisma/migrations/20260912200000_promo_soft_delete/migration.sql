@@ -1,0 +1,1 @@
+-- Soft-delete of promo codes is application-level (DEL. prefix). No schema change.

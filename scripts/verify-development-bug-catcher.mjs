@@ -40,4 +40,14 @@ const password = spawnSync("npx", ["tsx", "scripts/verify-password.mjs"], {
   shell: true,
 });
 
-process.exit(password.status === null ? 1 : password.status);
+if (password.status !== 0) {
+  process.exit(password.status === null ? 1 : password.status);
+}
+
+const loyalty = spawnSync("npx", ["tsx", "scripts/verify-loyalty.mjs"], {
+  cwd: root,
+  stdio: "inherit",
+  shell: true,
+});
+
+process.exit(loyalty.status === null ? 1 : loyalty.status);

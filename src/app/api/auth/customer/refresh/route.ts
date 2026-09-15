@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     );
   }
 
-  await prisma.refreshToken.delete({ where: { id: stored.id } });
   const auth = await issueCustomerAuth(toCustomerPublic(stored.customer));
+  await prisma.refreshToken.delete({ where: { id: stored.id } });
   return jsonWithCors(auth);
 }

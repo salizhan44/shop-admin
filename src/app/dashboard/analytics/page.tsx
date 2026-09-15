@@ -3,12 +3,17 @@ import { getStaffSession } from "@/lib/staff-session.server";
 import { canAccessAnalytics } from "@/lib/roles.shared";
 import {
   getAnalyticsWeekSnapshot,
+  getAverageAppSeconds,
   getCategorySalesShares,
   getDailySales,
   getProductProfitRanks,
+  getSalesSummary,
 } from "@/lib/analytics.server";
-import { pickProfitLeaders } from "@/lib/analytics.shared";
+import { averageCheckCents, pickProfitLeaders } from "@/lib/analytics.shared";
+import { formatAppDuration } from "@/lib/session-time.shared";
+import { formatPriceSomLabel } from "@/lib/products.shared";
 import { AccessDenied } from "@/components/access-denied";
+import { AnalyticsKpiCards } from "@/components/analytics-kpi-cards";
 import { AnalyticsWeekCards } from "@/components/analytics-week-cards";
 import { CategorySalesChart } from "@/components/category-sales-chart";
 import { SalesChart } from "@/components/sales-chart";
@@ -31,12 +36,14 @@ export default async function AnalyticsPage() {
     );
   }
 
-  const [profitRanks, dailySales, categoryShares, weekSnapshot] =
+  const [profitRanks, dailySales, categoryShares, weekSnapshot, sales, avgSeconds] =
     await Promise.all([
       getProductProfitRanks(),
       getDailySales(ANALYTICS_DAYS),
       getCategorySalesShares(),
       getAnalyticsWeekSnapshot(),
+      getSalesSummary(),
+      getAverageAppSeconds(),
     ]);
   const { top: topProducts, bottom: bottomProducts } = pickProfitLeaders(
     profitRanks,
@@ -45,6 +52,28 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="flex flex-col gap-10">
+      <AnalyticsKpiCards
+        cards={[
+          {
+            key: "check",
+            label: "Средний чек",
+            value: formatPriceSomLabel(
+              averageCheckCents(
+                sales.confirmedRevenueCents,
+                sales.confirmedOrderCount,
+              ),
+            ),
+            hint: `${sales.confirmedOrderCount} подтверждённых заказов`,
+          },
+          {
+            key: "time",
+            label: "Среднее время в приложении",
+            value: formatAppDuration(avgSeconds),
+            hint: "По клиентам с зафиксированными сессиями",
+          },
+        ]}
+      />
+
       <section className="grid items-stretch gap-5 xl:grid-cols-[22rem_minmax(0,1fr)]">
         <div className="flex h-full min-w-0 flex-col gap-3">
           <h2 className="text-lg font-semibold tracking-tight text-zinc-900">

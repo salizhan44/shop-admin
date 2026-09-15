@@ -12,6 +12,7 @@ import {
   parsePriceToCents,
   parseStockQuantity,
 } from "@/lib/products.shared";
+import { parseProductDiscount } from "@/lib/product-discount.shared";
 import type { ApiErrorBody, ProductPublic } from "@/lib/auth.shared";
 
 export function OPTIONS() {
@@ -66,6 +67,19 @@ export async function POST(request: Request) {
     );
   }
 
+  const discount = parseProductDiscount({
+    kind: json.discountKind ?? "none",
+    percentText: json.discountPercent ?? "",
+    amountSom: json.discountSom ?? "",
+    priceCents,
+  });
+  if ("error" in discount) {
+    return Response.json(
+      { error: discount.error } satisfies ApiErrorBody,
+      { status: 400 },
+    );
+  }
+
   const product = await createCatalogProduct({
     name,
     description,
@@ -77,6 +91,8 @@ export async function POST(request: Request) {
     subcategoryId: json.subcategoryId,
     subcategoryName: json.subcategoryName,
     imageUrl: json.imageUrl,
+    discountPercent: discount.discountPercent,
+    discountAmountCents: discount.discountAmountCents,
   });
   if (isCreateProductError(product)) {
     return Response.json(

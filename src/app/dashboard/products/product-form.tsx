@@ -8,6 +8,14 @@ import type {
   ProductAdmin,
 } from "@/lib/products.shared";
 import { formatPriceSomInput } from "@/lib/products.shared";
+import {
+  PRODUCT_DISCOUNT_KINDS,
+  isProductDiscountKind,
+  productDiscountKindFromFields,
+  productDiscountKindLabel,
+  type ProductDiscountKind,
+} from "@/lib/product-discount.shared";
+import { SelectField } from "@/components/select-field";
 import { ModalDialog } from "@/components/modal-dialog";
 import {
   UI_INPUT_CLASS,
@@ -42,6 +50,10 @@ export function ProductForm(props: {
   );
   const [subcategoryName, setSubcategoryName] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [discountKind, setDiscountKind] =
+    useState<ProductDiscountKind>("none");
+  const [discountPercent, setDiscountPercent] = useState("");
+  const [discountSom, setDiscountSom] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -94,7 +106,7 @@ export function ProductForm(props: {
   function fillFromProduct(product: ProductAdmin) {
     setName(product.name);
     setDescription(product.description);
-    setPriceSom(formatPriceSomInput(product.priceCents));
+    setPriceSom(formatPriceSomInput(product.listPriceCents));
     setCostSom(formatPriceSomInput(product.costCents));
     setStockQuantity(String(product.stockQuantity));
     setCategoryChoice(product.categoryId ?? PRODUCT_CATEGORY_NONE);
@@ -102,6 +114,15 @@ export function ProductForm(props: {
     setSubcategoryChoice(product.subcategoryId ?? PRODUCT_CATEGORY_NONE);
     setSubcategoryName("");
     setImageUrl(product.imageUrl);
+    setDiscountKind(productDiscountKindFromFields(product));
+    setDiscountPercent(
+      product.discountPercent != null ? String(product.discountPercent) : "",
+    );
+    setDiscountSom(
+      product.discountAmountCents != null
+        ? formatPriceSomInput(product.discountAmountCents)
+        : "",
+    );
     setError("");
   }
 
@@ -116,6 +137,9 @@ export function ProductForm(props: {
     setSubcategoryChoice(PRODUCT_CATEGORY_NONE);
     setSubcategoryName("");
     setImageUrl("");
+    setDiscountKind("none");
+    setDiscountPercent("");
+    setDiscountSom("");
     setError("");
   }
 
@@ -196,6 +220,9 @@ export function ProductForm(props: {
             subcategoryId: props.product.subcategoryId ?? "",
             subcategoryName: "",
             imageUrl,
+            discountKind,
+            discountPercent,
+            discountSom,
           }
         : {
             name,
@@ -208,6 +235,9 @@ export function ProductForm(props: {
             subcategoryId: creatingSubcategory ? "" : subcategoryChoice,
             subcategoryName: creatingSubcategory ? subcategoryName.trim() : "",
             imageUrl,
+            discountKind,
+            discountPercent,
+            discountSom,
           };
 
     try {
@@ -313,6 +343,46 @@ export function ProductForm(props: {
             className={UI_INPUT_CLASS}
           />
         </label>
+        <label className={UI_LABEL_CLASS}>
+          Скидка
+          <SelectField
+            value={discountKind}
+            onChange={(value) => {
+              if (isProductDiscountKind(value)) {
+                setDiscountKind(value);
+              }
+            }}
+            options={PRODUCT_DISCOUNT_KINDS.map((kind) => ({
+              value: kind,
+              label: productDiscountKindLabel(kind),
+            }))}
+            aria-label="Тип скидки"
+          />
+        </label>
+        {discountKind === "percent" ? (
+          <label className={UI_LABEL_CLASS}>
+            Процент
+            <input
+              inputMode="numeric"
+              value={discountPercent}
+              onChange={(event) => setDiscountPercent(event.target.value)}
+              placeholder="10"
+              className={UI_INPUT_CLASS}
+            />
+          </label>
+        ) : null}
+        {discountKind === "amount" ? (
+          <label className={UI_LABEL_CLASS}>
+            Сумма скидки, сом
+            <input
+              inputMode="decimal"
+              value={discountSom}
+              onChange={(event) => setDiscountSom(event.target.value)}
+              placeholder="20"
+              className={UI_INPUT_CLASS}
+            />
+          </label>
+        ) : null}
         {isEdit ? null : (
           <>
             <label className={UI_LABEL_CLASS}>

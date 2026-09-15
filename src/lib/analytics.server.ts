@@ -27,6 +27,7 @@ import {
   type ProductSalesRow,
   type SalesSummary,
 } from "./analytics.shared";
+import { averageAppSeconds } from "./session-time.shared";
 
 export async function getSalesSummary(): Promise<SalesSummary> {
   const [confirmed, pending, rejected, confirmedItems] = await Promise.all([
@@ -205,4 +206,12 @@ export async function getAnalyticsWeekSnapshot(): Promise<AnalyticsWeekSnapshot>
     window,
     ANALYTICS_WEEK_CATEGORY_LIMIT,
   );
+}
+
+export async function getAverageAppSeconds(): Promise<number> {
+  const rows = await prisma.customer.findMany({
+    where: { appSecondsTotal: { gt: 0 } },
+    select: { appSecondsTotal: true },
+  });
+  return averageAppSeconds(rows.map((row) => row.appSecondsTotal));
 }

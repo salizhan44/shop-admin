@@ -30,6 +30,7 @@ export type CustomerPublic = {
   avatarUrl: string;
   /** false — аккаунт только через Google, пароля нет. */
   hasPassword: boolean;
+  loyaltyPoints: number;
 };
 
 export function customerHasPassword(
@@ -48,7 +49,10 @@ export type ProductPublic = {
   id: string;
   name: string;
   description: string;
+  /** Цена для покупателя (уже со скидкой, если она есть). */
   priceCents: number;
+  /** Обычная цена, если на товар действует скидка. */
+  compareAtCents: number | null;
   imageUrl: string;
   categoryId: string | null;
   subcategoryId: string | null;
@@ -71,6 +75,9 @@ export type ProductCreateBody = {
    * data:image… — новое фото; /uploads/products/… — оставить текущее.
    */
   imageUrl?: string;
+  discountKind?: string;
+  discountPercent?: string;
+  discountSom?: string;
 };
 
 export type ApiErrorBody = {

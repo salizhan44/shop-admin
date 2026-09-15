@@ -79,6 +79,7 @@ export async function POST(request: Request) {
     address,
     comment,
     promoCode: json.promoCode,
+    pointsToSpend: json.pointsToSpend ?? 0,
   });
   if (isOrderError(result)) {
     return jsonWithCors(

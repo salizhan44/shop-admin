@@ -58,6 +58,16 @@ export function toSalesSummary(input: {
   };
 }
 
+export function averageCheckCents(
+  revenueCents: number,
+  orderCount: number,
+): number {
+  if (orderCount <= 0) {
+    return 0;
+  }
+  return Math.round(revenueCents / orderCount);
+}
+
 export function toProductSalesRow(input: {
   productId: string;
   productName: string;
