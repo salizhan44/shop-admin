@@ -70,4 +70,14 @@ const forgot = spawnSync("npx", ["tsx", "scripts/verify-forgot-password.mjs"], {
   shell: true,
 });
 
-process.exit(forgot.status === null ? 1 : forgot.status);
+if (forgot.status !== 0) {
+  process.exit(forgot.status === null ? 1 : forgot.status);
+}
+
+const deleteAccount = spawnSync("npx", ["tsx", "scripts/verify-delete-account.mjs"], {
+  cwd: root,
+  stdio: "inherit",
+  shell: true,
+});
+
+process.exit(deleteAccount.status === null ? 1 : deleteAccount.status);

@@ -1,8 +1,9 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "./prisma.server";
 import {
   SUPPORT_IMAGE_MAX_COUNT,
+  supportImageFileName,
   toSupportTicketPublic,
   toSupportTicketStaffPublic,
   validateSupportImageUrl,
@@ -185,6 +186,22 @@ export async function closeSupportTicket(
     },
   });
   return toSupportTicketPublic(updated);
+}
+
+export async function clearStoredSupportImages(
+  imageUrls: readonly string[],
+): Promise<void> {
+  for (const imageUrl of imageUrls) {
+    const fileName = supportImageFileName(imageUrl);
+    if (!fileName) {
+      continue;
+    }
+    try {
+      await unlink(path.join(SUPPORT_IMAGE_DIR, fileName));
+    } catch {
+      // файла могло не быть
+    }
+  }
 }
 
 export function isSupportError(

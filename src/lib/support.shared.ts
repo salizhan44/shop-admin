@@ -65,6 +65,23 @@ export function isSupportTicketCloseBody(
   return typeof body.reply === "string";
 }
 
+export function supportImageFileName(imageUrl: string): string | null {
+  const pathOnly = imageUrl.split("?")[0] ?? "";
+  if (!pathOnly.startsWith("/uploads/support/")) {
+    return null;
+  }
+  const name = pathOnly.slice("/uploads/support/".length);
+  if (
+    !name ||
+    name.includes("..") ||
+    name.includes("/") ||
+    name.includes("\\")
+  ) {
+    return null;
+  }
+  return name;
+}
+
 export function validateSupportImageUrl(imageUrl: string): string | null {
   if (imageUrl.length === 0) {
     return "Пустое фото";

@@ -4,6 +4,7 @@ import { getCustomerIdFromRequest } from "@/lib/customer-request.server";
 import {
   getCustomerProfile,
   updateCustomerProfile,
+  deleteCustomerAccount,
 } from "@/lib/customer-profile.server";
 import { isCustomerProfileUpdateBody } from "@/lib/customer-profile.shared";
 
@@ -69,6 +70,34 @@ export async function PATCH(request: Request) {
       {
         error:
           "Не удалось сохранить профиль. Перезапустите сайт (admin) и попробуйте снова.",
+      } satisfies ApiErrorBody,
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const customerId = await getCustomerIdFromRequest(request);
+    if (!customerId) {
+      return jsonWithCors({ error: "Нужен вход" } satisfies ApiErrorBody, {
+        status: 401,
+      });
+    }
+
+    const result = await deleteCustomerAccount(customerId);
+    if ("error" in result) {
+      return jsonWithCors({ error: result.error } satisfies ApiErrorBody, {
+        status: result.status,
+      });
+    }
+
+    return jsonWithCors({ ok: true });
+  } catch {
+    return jsonWithCors(
+      {
+        error:
+          "Не удалось удалить аккаунт. Перезапустите сайт (admin) и попробуйте снова.",
       } satisfies ApiErrorBody,
       { status: 500 },
     );

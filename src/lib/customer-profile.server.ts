@@ -14,6 +14,7 @@ import {
   type CustomerPasswordChangeBody,
   type CustomerProfileUpdateBody,
 } from "./customer-profile.shared";
+import { clearStoredSupportImages } from "./support.server";
 
 const AVATAR_DIR = path.join(process.cwd(), "public", "uploads", "avatars");
 
@@ -256,4 +257,48 @@ export async function addCustomerAppSeconds(
   } catch {
     return { error: "Не удалось сохранить время" };
   }
+}
+
+export async function deleteCustomerAccount(
+  customerId: string,
+): Promise<{ ok: true } | { error: string; status: number }> {
+  const customer = await prisma.customer.findUnique({
+    where: { id: customerId },
+    select: {
+      id: true,
+      supportTickets: { select: { imageUrls: true } },
+    },
+  });
+  if (!customer) {
+    return { error: "Не найден", status: 404 };
+  }
+
+  const supportImageUrls = customer.supportTickets.flatMap(
+    (ticket) => ticket.imageUrls,
+  );
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const redemptions = await tx.promoRedemption.findMany({
+        where: { customerId },
+        select: { promoCodeId: true },
+      });
+      for (const row of redemptions) {
+        await tx.promoCode.updateMany({
+          where: { id: row.promoCodeId, redemptionCount: { gt: 0 } },
+          data: { redemptionCount: { decrement: 1 } },
+        });
+      }
+      await tx.promoRedemption.deleteMany({ where: { customerId } });
+      await tx.order.deleteMany({ where: { customerId } });
+      await tx.supportTicket.deleteMany({ where: { customerId } });
+      await tx.customer.delete({ where: { id: customerId } });
+    });
+  } catch {
+    return { error: "Не удалось удалить аккаунт", status: 500 };
+  }
+
+  await clearStoredAvatarFile(customerId);
+  await clearStoredSupportImages(supportImageUrls);
+  return { ok: true };
 }
