@@ -4,7 +4,7 @@ export type AnalyticsKpiCard = {
   key: string;
   label: string;
   value: string;
-  hint: string;
+  hint?: string;
 };
 
 export function AnalyticsKpiCards(props: { cards: AnalyticsKpiCard[] }) {
@@ -17,7 +17,9 @@ export function AnalyticsKpiCards(props: { cards: AnalyticsKpiCard[] }) {
             <p className="mt-2 text-2xl font-semibold tracking-tight text-zinc-900">
               {card.value}
             </p>
-            <p className="mt-1 text-xs text-zinc-400">{card.hint}</p>
+            {card.hint ? (
+              <p className="mt-1 text-xs text-zinc-400">{card.hint}</p>
+            ) : null}
           </article>
         </li>
       ))}

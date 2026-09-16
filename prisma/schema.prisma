@@ -157,6 +157,11 @@ model Order {
   address         String      @default("")
   comment         String?
   rejectionReason String?
+  /** Координаты адреса доставки (2ГИС / геокод). */
+  destLat         Float?
+  destLng         Float?
+  /** Оценка времени в пути, минуты. */
+  etaMinutes      Int?
   items           OrderItem[]
   promoRedemption PromoRedemption?
   createdAt       DateTime    @default(now())

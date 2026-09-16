@@ -102,7 +102,6 @@ export function PromoForm(props: { products: ProductAdmin[] }) {
               required
               value={code}
               onChange={(event) => setCode(event.target.value)}
-              placeholder="ROLA10"
               className={`${UI_INPUT_CLASS} uppercase`}
             />
           </label>
@@ -160,7 +159,6 @@ export function PromoForm(props: { products: ProductAdmin[] }) {
             <input
               value={maxTotalRedemptions}
               onChange={(event) => setMaxTotalRedemptions(event.target.value)}
-              placeholder="Без лимита"
               inputMode="numeric"
               className={UI_INPUT_CLASS}
             />

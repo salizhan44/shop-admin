@@ -13,6 +13,7 @@ import {
   payableAfterLoyaltyCents,
 } from "./loyalty.shared";
 import { salePriceCents } from "./product-discount.shared";
+import { getShopPoint, resolveDeliveryForAddress } from "./delivery.server";
 import {
   notifyOrderConfirmed,
   notifyOrderCreated,
@@ -20,14 +21,39 @@ import {
 } from "./push.server";
 import {
   toOrderPublic,
+  toOrderStaffListRow,
   toOrderStaffPublic,
   type OrderPublic,
+  type OrderStaffListRow,
   type OrderStaffPublic,
 } from "./orders.shared";
+import {
+  OVERVIEW_ACTIVITY_LIMIT,
+  type OverviewOrderCounts,
+} from "./overview.shared";
 
 const orderInclude = {
   items: true,
 } as const;
+
+function withShop<T extends object>(order: T) {
+  const shop = getShopPoint();
+  return { ...order, shopLat: shop.lat, shopLng: shop.lng };
+}
+
+async function attachOrderDelivery(
+  orderId: string,
+  address: string,
+): Promise<void> {
+  const resolved = await resolveDeliveryForAddress(address);
+  if (!resolved) {
+    return;
+  }
+  await prisma.order.update({
+    where: { id: orderId },
+    data: resolved,
+  });
+}
 
 class CheckoutDomainError extends Error {
   readonly status: number;
@@ -39,48 +65,152 @@ class CheckoutDomainError extends Error {
   }
 }
 
-export async function listOrdersForStaff(): Promise<OrderStaffPublic[]> {
+const staffOrderCustomerSelect = {
+  select: { name: true, email: true },
+} as const;
+
+const staffOrderDetailInclude = {
+  items: {
+    include: {
+      product: {
+        select: { stockQuantity: true },
+      },
+    },
+  },
+  customer: staffOrderCustomerSelect,
+} as const;
+
+function toStaffOrderDto(order: {
+  id: string;
+  status: OrderStaffPublic["status"];
+  totalCents: number;
+  discountCents: number;
+  pointsSpent: number;
+  pointsEarned: number;
+  promoCodeText: string;
+  phone: string;
+  address: string;
+  comment: string | null;
+  rejectionReason: string | null;
+  createdAt: Date;
+  destLat: number | null;
+  destLng: number | null;
+  etaMinutes: number | null;
+  customer: { name: string; email: string };
+  items?: ReadonlyArray<{
+    id: string;
+    productId: string;
+    productName: string;
+    priceCents: number;
+    quantity: number;
+    lineTotalCents: number;
+    product: { stockQuantity: number };
+  }>;
+}): OrderStaffPublic {
+  const shop = getShopPoint();
+  return toOrderStaffPublic({
+    id: order.id,
+    status: order.status,
+    totalCents: order.totalCents,
+    discountCents: order.discountCents,
+    pointsSpent: order.pointsSpent,
+    pointsEarned: order.pointsEarned,
+    promoCodeText: order.promoCodeText,
+    phone: order.phone,
+    address: order.address,
+    comment: order.comment,
+    rejectionReason: order.rejectionReason,
+    createdAt: order.createdAt,
+    destLat: order.destLat,
+    destLng: order.destLng,
+    etaMinutes: order.etaMinutes,
+    shopLat: shop.lat,
+    shopLng: shop.lng,
+    customer: order.customer,
+    items: (order.items ?? []).map((item) => ({
+      id: item.id,
+      productId: item.productId,
+      productName: item.productName,
+      priceCents: item.priceCents,
+      quantity: item.quantity,
+      lineTotalCents: item.lineTotalCents,
+      stockQuantityOnHand: item.product.stockQuantity,
+    })),
+  });
+}
+
+export async function listOrdersForStaff(): Promise<OrderStaffListRow[]> {
   const orders = await prisma.order.findMany({
     orderBy: { createdAt: "desc" },
-    include: {
-      items: {
-        include: {
-          product: {
-            select: { stockQuantity: true },
-          },
-        },
-      },
+    select: {
+      id: true,
+      status: true,
+      totalCents: true,
+      createdAt: true,
       customer: {
-        select: { name: true, email: true },
+        select: { name: true },
       },
     },
   });
   return orders.map((order) =>
-    toOrderStaffPublic({
+    toOrderStaffListRow({
       id: order.id,
       status: order.status,
       totalCents: order.totalCents,
-      discountCents: order.discountCents,
-      pointsSpent: order.pointsSpent,
-      pointsEarned: order.pointsEarned,
-      promoCodeText: order.promoCodeText,
-      phone: order.phone,
-      address: order.address,
-      comment: order.comment,
-      rejectionReason: order.rejectionReason,
       createdAt: order.createdAt,
-      customer: order.customer,
-      items: order.items.map((item) => ({
-        id: item.id,
-        productId: item.productId,
-        productName: item.productName,
-        priceCents: item.priceCents,
-        quantity: item.quantity,
-        lineTotalCents: item.lineTotalCents,
-        stockQuantityOnHand: item.product.stockQuantity,
-      })),
+      customerName: order.customer.name,
     }),
   );
+}
+
+export async function getOrderForStaff(
+  orderId: string,
+): Promise<OrderStaffPublic | null> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: staffOrderDetailInclude,
+  });
+  if (!order) {
+    return null;
+  }
+  return toStaffOrderDto(order);
+}
+
+export async function listOverviewForStaff(): Promise<{
+  counts: OverviewOrderCounts;
+  activity: OrderStaffPublic[];
+}> {
+  const [grouped, recent] = await Promise.all([
+    prisma.order.groupBy({
+      by: ["status"],
+      _count: { _all: true },
+    }),
+    prisma.order.findMany({
+      orderBy: { createdAt: "desc" },
+      take: OVERVIEW_ACTIVITY_LIMIT,
+      include: staffOrderDetailInclude,
+    }),
+  ]);
+
+  const counts: OverviewOrderCounts = {
+    pending: 0,
+    confirmed: 0,
+    rejected: 0,
+  };
+  for (const row of grouped) {
+    if (row.status === "PENDING") {
+      counts.pending = row._count._all;
+    } else if (row.status === "CONFIRMED") {
+      counts.confirmed = row._count._all;
+    } else {
+      counts.rejected = row._count._all;
+    }
+  }
+
+  return {
+    counts,
+    activity: recent.map((order) => toStaffOrderDto(order)),
+  };
 }
 
 export async function listOrdersForCustomer(
@@ -91,7 +221,7 @@ export async function listOrdersForCustomer(
     orderBy: { createdAt: "desc" },
     include: orderInclude,
   });
-  return orders.map((order) => toOrderPublic(order));
+  return orders.map((order) => toOrderPublic(withShop(order)));
 }
 
 async function getOrderById(orderId: string) {
@@ -154,7 +284,9 @@ export async function confirmOrder(
         include: orderInclude,
       });
     });
-    const publicOrder = toOrderPublic(updated);
+    await attachOrderDelivery(updated.id, updated.address);
+    const withGeo = (await getOrderById(updated.id)) ?? updated;
+    const publicOrder = toOrderPublic(withShop(withGeo));
     void notifyOrderConfirmed(updated.customerId, updated.id).catch((error) => {
       console.error("[push] confirm notify failed", error);
     });
@@ -193,7 +325,7 @@ export async function rejectOrder(
     await refundCustomerPoints(tx, order.customerId, order.pointsSpent);
     return next;
   });
-  const publicOrder = toOrderPublic(updated);
+  const publicOrder = toOrderPublic(withShop(updated));
   void notifyOrderRejected(updated.customerId, updated.id, trimmed).catch(
     (error) => {
       console.error("[push] reject notify failed", error);
@@ -342,7 +474,9 @@ export async function createOrderFromCart(
       return created;
     });
 
-    const publicOrder = toOrderPublic(order);
+    await attachOrderDelivery(order.id, order.address);
+    const withGeo = (await getOrderById(order.id)) ?? order;
+    const publicOrder = toOrderPublic(withShop(withGeo));
     void notifyOrderCreated(customerId, order.id).catch((error) => {
       console.error("[push] create notify failed", error);
     });

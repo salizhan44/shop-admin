@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import type { ApiErrorBody } from "@/lib/auth.shared";
 import { PasswordInput } from "@/components/password-input";
 import {
+  ADMIN_MENU_BG,
   UI_INPUT_CLASS,
   UI_LABEL_CLASS,
-  UI_PRIMARY_BUTTON_CLASS,
+  UI_THEME_BUTTON_CLASS,
 } from "@/lib/ui.shared";
 
 export function LoginForm() {
@@ -70,7 +71,8 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className={`mt-1 ${UI_PRIMARY_BUTTON_CLASS}`}
+        className={`mt-1 ${UI_THEME_BUTTON_CLASS}`}
+        style={{ backgroundColor: ADMIN_MENU_BG }}
       >
         {pending ? "Входим…" : "Войти"}
       </button>

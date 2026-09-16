@@ -50,4 +50,24 @@ const loyalty = spawnSync("npx", ["tsx", "scripts/verify-loyalty.mjs"], {
   shell: true,
 });
 
-process.exit(loyalty.status === null ? 1 : loyalty.status);
+if (loyalty.status !== 0) {
+  process.exit(loyalty.status === null ? 1 : loyalty.status);
+}
+
+const delivery = spawnSync("npx", ["tsx", "scripts/verify-delivery.mjs"], {
+  cwd: root,
+  stdio: "inherit",
+  shell: true,
+});
+
+if (delivery.status !== 0) {
+  process.exit(delivery.status === null ? 1 : delivery.status);
+}
+
+const forgot = spawnSync("npx", ["tsx", "scripts/verify-forgot-password.mjs"], {
+  cwd: root,
+  stdio: "inherit",
+  shell: true,
+});
+
+process.exit(forgot.status === null ? 1 : forgot.status);

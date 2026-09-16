@@ -127,6 +127,24 @@ export function DashboardNavIconMark(props: { icon: DashboardNavIcon }) {
           />
         </IconMark>
       );
+    case "customers":
+      return (
+        <IconMark>
+          <circle cx="8" cy="7.2" r="2.2" stroke="currentColor" strokeWidth="1.5" />
+          <path
+            d="M3.8 15.5c.5-2.3 2-3.5 4.2-3.5s3.7 1.2 4.2 3.5"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M13.2 8.2h3.4M14.9 6.5v3.4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </IconMark>
+      );
     case "support":
       return (
         <IconMark>

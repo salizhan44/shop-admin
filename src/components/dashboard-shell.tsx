@@ -59,6 +59,7 @@ export function DashboardShell(props: {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={false}
             className={`flex items-center gap-2.5 px-3 py-2 text-sm transition ${
               active
                 ? `${ADMIN_MENU_ACTIVE_RADIUS_CLASS} font-medium`

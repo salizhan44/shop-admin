@@ -18,9 +18,10 @@ import {
 import { SelectField } from "@/components/select-field";
 import { ModalDialog } from "@/components/modal-dialog";
 import {
+  ADMIN_MENU_BG,
   UI_INPUT_CLASS,
   UI_LABEL_CLASS,
-  UI_PRIMARY_BUTTON_CLASS,
+  UI_THEME_BUTTON_CLASS,
 } from "@/lib/ui.shared";
 import { ProductDeleteButton } from "./product-delete-button";
 import { ProductImageField } from "./product-image-field";
@@ -366,7 +367,6 @@ export function ProductForm(props: {
               inputMode="numeric"
               value={discountPercent}
               onChange={(event) => setDiscountPercent(event.target.value)}
-              placeholder="10"
               className={UI_INPUT_CLASS}
             />
           </label>
@@ -378,7 +378,6 @@ export function ProductForm(props: {
               inputMode="decimal"
               value={discountSom}
               onChange={(event) => setDiscountSom(event.target.value)}
-              placeholder="20"
               className={UI_INPUT_CLASS}
             />
           </label>
@@ -412,7 +411,8 @@ export function ProductForm(props: {
           <button
             type="submit"
             disabled={pending}
-            className={`flex-1 ${UI_PRIMARY_BUTTON_CLASS}`}
+            className={`flex-1 ${UI_THEME_BUTTON_CLASS}`}
+            style={{ backgroundColor: ADMIN_MENU_BG }}
           >
             {pending
               ? "Сохраняем…"

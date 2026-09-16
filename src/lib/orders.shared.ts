@@ -1,4 +1,8 @@
 import type { StatusTone } from "./ui.shared";
+import {
+  toOrderDeliveryPublic,
+  type OrderDeliveryPublic,
+} from "./delivery.shared";
 
 export const ORDER_STATUSES = ["PENDING", "CONFIRMED", "REJECTED"] as const;
 
@@ -31,13 +35,37 @@ export type OrderPublic = {
   rejectionReason: string | null;
   items: OrderLinePublic[];
   createdAt: string;
-};
+} & OrderDeliveryPublic;
 
 export type OrderStaffPublic = Omit<OrderPublic, "items"> & {
   items: OrderLineStaffPublic[];
   customerName: string;
   customerEmail: string;
 };
+
+export type OrderStaffListRow = {
+  id: string;
+  status: OrderStatus;
+  totalCents: number;
+  createdAt: string;
+  customerName: string;
+};
+
+export function toOrderStaffListRow(input: {
+  id: string;
+  status: OrderStatus;
+  totalCents: number;
+  createdAt: Date;
+  customerName: string;
+}): OrderStaffListRow {
+  return {
+    id: input.id,
+    status: input.status,
+    totalCents: input.totalCents,
+    createdAt: input.createdAt.toISOString(),
+    customerName: input.customerName,
+  };
+}
 
 export type OrderCheckoutBody = {
   phone: string;
@@ -82,6 +110,11 @@ export function toOrderPublic(input: {
   comment: string | null;
   rejectionReason: string | null;
   createdAt: Date;
+  destLat?: number | null;
+  destLng?: number | null;
+  etaMinutes?: number | null;
+  shopLat?: number;
+  shopLng?: number;
   items: Array<{
     id: string;
     productId: string;
@@ -91,6 +124,16 @@ export function toOrderPublic(input: {
     lineTotalCents: number;
   }>;
 }): OrderPublic {
+  const delivery = toOrderDeliveryPublic({
+    address: input.address,
+    destLat: input.destLat,
+    destLng: input.destLng,
+    etaMinutes: input.status === "CONFIRMED" ? input.etaMinutes : null,
+    shop:
+      input.shopLat != null && input.shopLng != null
+        ? { lat: input.shopLat, lng: input.shopLng }
+        : undefined,
+  });
   return {
     id: input.id,
     status: input.status,
@@ -105,7 +148,34 @@ export function toOrderPublic(input: {
     rejectionReason: input.rejectionReason,
     createdAt: input.createdAt.toISOString(),
     items: input.items.map((item) => toOrderLine(item)),
+    ...delivery,
+    etaMinutes: input.status === "CONFIRMED" ? delivery.etaMinutes : null,
   };
+}
+
+export function isOrderStaffPublic(value: unknown): value is OrderStaffPublic {
+  if (!isOrderPublic(value)) {
+    return false;
+  }
+  const body = value as {
+    customerName?: unknown;
+    customerEmail?: unknown;
+    items?: unknown;
+  };
+  if (
+    typeof body.customerName !== "string" ||
+    typeof body.customerEmail !== "string" ||
+    !Array.isArray(body.items)
+  ) {
+    return false;
+  }
+  return body.items.every((item) => {
+    if (typeof item !== "object" || item === null) {
+      return false;
+    }
+    const row = item as { stockQuantityOnHand?: unknown };
+    return typeof row.stockQuantityOnHand === "number";
+  });
 }
 
 export function isOrderPublic(value: unknown): value is OrderPublic {
@@ -191,6 +261,18 @@ export const STAFF_ORDER_LIST_FILTERS: readonly StaffOrderListFilterOption[] = [
   { value: "PENDING", label: "Ожидающие" },
   { value: "REJECTED", label: "Отклонённые" },
 ];
+
+export const STAFF_ORDER_LIST_PAGE_SIZE = 40;
+
+export function takeStaffOrderListPage<T>(
+  orders: readonly T[],
+  limit: number,
+): T[] {
+  if (limit <= 0) {
+    return [];
+  }
+  return orders.slice(0, limit);
+}
 
 export function filterStaffOrders<T extends { status: OrderStatus }>(
   orders: readonly T[],
@@ -298,6 +380,11 @@ export function toOrderStaffPublic(input: {
   comment: string | null;
   rejectionReason: string | null;
   createdAt: Date;
+  destLat?: number | null;
+  destLng?: number | null;
+  etaMinutes?: number | null;
+  shopLat?: number;
+  shopLng?: number;
   customer: { name: string; email: string };
   items: Array<{
     id: string;

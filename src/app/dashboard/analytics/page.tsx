@@ -63,13 +63,11 @@ export default async function AnalyticsPage() {
                 sales.confirmedOrderCount,
               ),
             ),
-            hint: `${sales.confirmedOrderCount} подтверждённых заказов`,
           },
           {
             key: "time",
             label: "Среднее время в приложении",
             value: formatAppDuration(avgSeconds),
-            hint: "По клиентам с зафиксированными сессиями",
           },
         ]}
       />

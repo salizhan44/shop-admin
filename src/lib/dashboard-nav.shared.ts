@@ -17,6 +17,7 @@ export type DashboardNavIcon =
   | "products"
   | "promo"
   | "staff"
+  | "customers"
   | "support"
   | "analytics"
   | "accounting";
@@ -68,6 +69,12 @@ const ALL_NAV_ITEMS: Array<
     label: "Сотрудники",
     icon: "staff",
     visible: canManageStaff,
+  },
+  {
+    href: "/dashboard/customers",
+    label: "Клиенты",
+    icon: "customers",
+    visible: canAccessSupport,
   },
   {
     href: "/dashboard/support",

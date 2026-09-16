@@ -4,18 +4,25 @@ import { formatPriceSomLabel } from "@/lib/products.shared";
 import type { OrderStaffPublic } from "@/lib/orders.shared";
 
 export function OrderItemsModal(props: {
+  open: boolean;
   order: OrderStaffPublic | null;
+  loading?: boolean;
+  error?: string;
   onClose: () => void;
 }) {
   const order = props.order;
 
   return (
     <ModalDialog
-      open={order !== null}
+      open={props.open}
       title="Состав заказа"
       onClose={props.onClose}
     >
-      {order ? (
+      {props.loading ? (
+        <p className={UI_MUTED_CLASS}>Загрузка…</p>
+      ) : props.error ? (
+        <p className="text-sm text-red-700">{props.error}</p>
+      ) : order ? (
         <div className="flex flex-col gap-3">
           <ul className="flex flex-col gap-2">
             {order.items.map((item) => {
@@ -51,6 +58,22 @@ export function OrderItemsModal(props: {
           <p className="text-sm font-semibold text-zinc-900">
             {formatPriceSomLabel(order.totalCents)}
           </p>
+          {order.address ? (
+            <p className={UI_MUTED_CLASS}>Адрес: {order.address}</p>
+          ) : null}
+          {order.status === "CONFIRMED" && order.etaMinutes ? (
+            <p className={UI_MUTED_CLASS}>В пути ~{order.etaMinutes} мин</p>
+          ) : null}
+          {order.dgisUrl ? (
+            <a
+              href={order.dgisUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-medium text-zinc-800 underline underline-offset-2"
+            >
+              Открыть маршрут в 2ГИС
+            </a>
+          ) : null}
           {order.rejectionReason ? (
             <p className="text-sm text-red-700">{order.rejectionReason}</p>
           ) : null}

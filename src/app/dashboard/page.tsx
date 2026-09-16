@@ -7,14 +7,9 @@ import {
   canAccessWarehouse,
 } from "@/lib/roles.shared";
 import { getMonthlySales } from "@/lib/analytics.server";
-import { listOrdersForStaff } from "@/lib/orders.server";
+import { listOverviewForStaff } from "@/lib/orders.server";
 import { listSupportTicketsForStaff } from "@/lib/support.server";
-import {
-  OVERVIEW_ACTIVITY_LIMIT,
-  OVERVIEW_MONTHS,
-  countOverviewOrderStatuses,
-  pickOverviewActivity,
-} from "@/lib/overview.shared";
+import { OVERVIEW_MONTHS } from "@/lib/overview.shared";
 import { PageHeader } from "@/components/page-header";
 import { OverviewMonthChart } from "@/components/overview-month-chart";
 import { OverviewStatusCards } from "@/components/overview-status-cards";
@@ -32,16 +27,16 @@ export default async function DashboardPage() {
   const showSupportFallback =
     canAccessSupport(session.role) && !showChart && !showOrders;
 
-  const [months, orders, tickets] = await Promise.all([
+  const [months, overview, tickets] = await Promise.all([
     showChart ? getMonthlySales(OVERVIEW_MONTHS) : Promise.resolve([]),
-    showOrders ? listOrdersForStaff() : Promise.resolve([]),
+    showOrders ? listOverviewForStaff() : Promise.resolve(null),
     showSupportFallback
       ? listSupportTicketsForStaff()
       : Promise.resolve([]),
   ]);
 
-  const counts = countOverviewOrderStatuses(orders);
-  const activity = pickOverviewActivity(orders, OVERVIEW_ACTIVITY_LIMIT);
+  const counts = overview?.counts ?? { pending: 0, confirmed: 0, rejected: 0 };
+  const activity = overview?.activity ?? [];
   const openTickets = tickets.filter((ticket) => ticket.status === "OPEN");
 
   return (

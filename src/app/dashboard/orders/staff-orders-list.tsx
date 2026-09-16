@@ -3,20 +3,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   STAFF_ORDER_LIST_FILTERS,
+  STAFF_ORDER_LIST_PAGE_SIZE,
   filterStaffOrders,
   formatOrderDate,
   formatOrderShortId,
+  isOrderStaffPublic,
   longestOrderStatusLabel,
   orderStatusLabel,
+  takeStaffOrderListPage,
+  type OrderStaffListRow,
   type OrderStaffPublic,
   type OrderStatus,
   type StaffOrderListFilter,
 } from "@/lib/orders.shared";
+import type { ApiErrorBody } from "@/lib/auth.shared";
 import { formatPriceSomLabel } from "@/lib/products.shared";
 import {
   ADMIN_MENU_BG,
   ORDER_CONFIRMED_COLOR,
   UI_MUTED_CLASS,
+  UI_SECONDARY_BUTTON_CLASS,
 } from "@/lib/ui.shared";
 import { RefreshWithUpdates } from "@/components/refresh-with-updates";
 import { OrderActions } from "./order-actions";
@@ -32,12 +38,52 @@ const DATA_CELL = "flex min-w-0 items-center py-3";
 const CELL_TEXT = "whitespace-nowrap text-sm";
 
 export function StaffOrdersList(props: {
-  orders: OrderStaffPublic[];
+  orders: OrderStaffListRow[];
   latestAt: string | null;
 }) {
   const [filter, setFilter] = useState<StaffOrderListFilter>("all");
+  const [listLimit, setListLimit] = useState(STAFF_ORDER_LIST_PAGE_SIZE);
+  const [itemsOpen, setItemsOpen] = useState(false);
   const [itemsOrder, setItemsOrder] = useState<OrderStaffPublic | null>(null);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [itemsError, setItemsError] = useState("");
   const scrollerRef = useRef<HTMLDivElement>(null);
+
+  async function openOrderItems(orderId: string) {
+    setItemsError("");
+    setItemsOrder(null);
+    setItemsOpen(true);
+    setItemsLoading(true);
+    try {
+      const response = await fetch(`/api/staff/orders/${orderId}`);
+      const data: unknown = await response.json().catch(() => null);
+      if (!response.ok) {
+        const message =
+          typeof data === "object" &&
+          data !== null &&
+          "error" in data &&
+          typeof (data as ApiErrorBody).error === "string"
+            ? (data as ApiErrorBody).error
+            : "Не удалось открыть состав";
+        setItemsError(message);
+        return;
+      }
+      if (
+        typeof data !== "object" ||
+        data === null ||
+        !("order" in data) ||
+        !isOrderStaffPublic((data as { order: unknown }).order)
+      ) {
+        setItemsError("Не удалось открыть состав");
+        return;
+      }
+      setItemsOrder((data as { order: OrderStaffPublic }).order);
+    } catch {
+      setItemsError("Нет связи с сервером");
+    } finally {
+      setItemsLoading(false);
+    }
+  }
 
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -80,6 +126,7 @@ export function StaffOrdersList(props: {
     () => filterStaffOrders(props.orders, filter),
     [props.orders, filter],
   );
+  const rows = takeStaffOrderListPage(visible, listLimit);
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
@@ -91,7 +138,10 @@ export function StaffOrdersList(props: {
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setFilter(option.value)}
+                onClick={() => {
+                  setFilter(option.value);
+                  setListLimit(STAFF_ORDER_LIST_PAGE_SIZE);
+                }}
                 className={
                   active
                     ? "rounded-xl px-4 py-2 text-sm font-medium text-white"
@@ -135,7 +185,7 @@ export function StaffOrdersList(props: {
               <p className={`${UI_MUTED_CLASS} col-span-7`}>Нет заказов</p>
             </div>
           ) : (
-            visible.map((order) => (
+            rows.map((order) => (
               <div key={order.id} className={DATA_ROW}>
                 <p className={`${DATA_CELL} ${CELL_TEXT} font-medium text-zinc-900`}>
                   {formatOrderShortId(order.id)}
@@ -146,7 +196,9 @@ export function StaffOrdersList(props: {
                 <div className={DATA_CELL}>
                   <button
                     type="button"
-                    onClick={() => setItemsOrder(order)}
+                    onClick={() => {
+                      void openOrderItems(order.id);
+                    }}
                     className="inline-flex h-9 items-center justify-center whitespace-nowrap rounded-xl bg-white px-2 text-sm font-medium text-zinc-800 ring-1 ring-zinc-200/80 transition hover:bg-zinc-50"
                   >
                     Состав
@@ -173,9 +225,29 @@ export function StaffOrdersList(props: {
         </div>
       </div>
 
+      {visible.length > rows.length ? (
+        <button
+          type="button"
+          className={`${UI_SECONDARY_BUTTON_CLASS} self-center`}
+          onClick={() => {
+            setListLimit((current) => current + STAFF_ORDER_LIST_PAGE_SIZE);
+          }}
+        >
+          Показать ещё
+        </button>
+      ) : null}
+
       <OrderItemsModal
+        open={itemsOpen}
         order={itemsOrder}
-        onClose={() => setItemsOrder(null)}
+        loading={itemsLoading}
+        error={itemsError}
+        onClose={() => {
+          setItemsOpen(false);
+          setItemsOrder(null);
+          setItemsError("");
+          setItemsLoading(false);
+        }}
       />
     </div>
   );

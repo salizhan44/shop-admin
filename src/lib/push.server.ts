@@ -172,7 +172,7 @@ export async function notifyOrderConfirmed(
 ): Promise<void> {
   await sendPushToCustomer(customerId, {
     title: "Заказ подтверждён",
-    body: "Склад подтвердил заказ. Можно следить за статусом в приложении.",
+    body: "Машина найдена. Маршрут и время — во вкладке «Мои заказы».",
     data: { type: "order_confirmed", orderId },
   });
 }

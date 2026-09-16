@@ -16,6 +16,9 @@ export const UI_CARD_CLASS =
 export const UI_PRIMARY_BUTTON_CLASS =
   "inline-flex items-center justify-center rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:opacity-60";
 
+export const UI_THEME_BUTTON_CLASS =
+  "inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-60";
+
 export const UI_SECONDARY_BUTTON_CLASS =
   "inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 ring-1 ring-zinc-200/80 transition hover:bg-zinc-50 disabled:opacity-60";
 

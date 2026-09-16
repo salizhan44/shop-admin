@@ -23,6 +23,7 @@ import {
   weekWindowDateKeys,
 } from "../src/lib/analytics-week.shared";
 import {
+  OVERVIEW_ACTIVITY_LIMIT,
   aggregateMonthlySales,
   countOverviewOrderStatuses,
   fillMonthlySalesRange,
@@ -292,6 +293,11 @@ assert.equal(
   "Заказ 0M83KFJ8 отклонён",
 );
 assert.equal(pickOverviewActivity([1, 2, 3, 4], 2).length, 2);
+assert.equal(OVERVIEW_ACTIVITY_LIMIT, 20);
+assert.equal(
+  pickOverviewActivity([1, 2, 3, 4, 5], OVERVIEW_ACTIVITY_LIMIT).length,
+  5,
+);
 
 const grouped = groupWarehouseProductsByCategory([
   {

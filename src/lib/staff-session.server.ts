@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { prisma } from "./prisma.server";
 import {
   STAFF_COOKIE_NAME,
@@ -29,24 +30,26 @@ export async function clearStaffSessionCookie(): Promise<void> {
   jar.delete(STAFF_COOKIE_NAME);
 }
 
-export async function getStaffSession(): Promise<StaffSessionPublic | null> {
-  const jar = await cookies();
-  const token = jar.get(STAFF_COOKIE_NAME)?.value;
-  if (!token) {
-    return null;
-  }
-
-  try {
-    const payload = await verifyStaffToken(token);
-    const staff = await prisma.staffUser.findUnique({
-      where: { id: payload.sub },
-      select: { name: true, email: true, role: true },
-    });
-    if (!staff) {
+export const getStaffSession = cache(
+  async (): Promise<StaffSessionPublic | null> => {
+    const jar = await cookies();
+    const token = jar.get(STAFF_COOKIE_NAME)?.value;
+    if (!token) {
       return null;
     }
-    return staff;
-  } catch {
-    return null;
-  }
-}
+
+    try {
+      const payload = await verifyStaffToken(token);
+      const staff = await prisma.staffUser.findUnique({
+        where: { id: payload.sub },
+        select: { name: true, email: true, role: true },
+      });
+      if (!staff) {
+        return null;
+      }
+      return staff;
+    } catch {
+      return null;
+    }
+  },
+);
