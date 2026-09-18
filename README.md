@@ -2,29 +2,65 @@
 
 Сайт для сотрудников магазина (Next.js + PostgreSQL). Клиенты сюда не заходят — только приложение через API.
 
-Репозиторий приложения: [shop-mobile](https://github.com/salizhan44/shop-mobile) (ветка `dev`). Как собрать Android и проверить пуши с телефона — там же, раздел **Как проверить**.
+Репозиторий приложения: [shop-mobile](https://github.com/salizhan44/shop-mobile) (ветка `dev`). Как собрать Android и проверить пуши с телефона — там же.
 
-## Требования
+## Как открыть у себя с GitHub
 
-- Node.js 20+
-- Docker Desktop (PostgreSQL в контейнере)
+Это **два** репозитория, не одна папка: сначала этот сайт, потом [shop-mobile](https://github.com/salizhan44/shop-mobile).
 
-## Первый запуск
+**Клонируйте ветку `dev`.** На GitHub кнопка Code по умолчанию берёт `main` — там только пустой первый коммит, сайт не поднимется.
 
 ```bash
+git clone -b dev https://github.com/salizhan44/shop-admin.git
+git clone -b dev https://github.com/salizhan44/shop-mobile.git
+```
+
+Если уже клонировали без `-b dev`:
+
+```bash
+git checkout dev
+git pull origin dev
+```
+
+### Сайт (этот репозиторий)
+
+Нужны **Node.js 20+** и **Docker Desktop** (должен быть запущен).
+
+```bash
+cd shop-admin
 npm install
+```
+
+Скопируйте шаблон env (файл `.env` в git не лежит — у каждого свой):
+
+```bash
 cp .env.example .env
+```
+
+В PowerShell: `Copy-Item .env.example .env`
+
+Дальше Postgres, схема, тестовые товары и сервер:
+
+```bash
 docker compose up -d
 npx prisma migrate deploy
 npm run db:seed
 npm run dev
 ```
 
-Сайт: http://localhost:3000
+- Сайт: http://localhost:3000
+- API жив: http://localhost:3000/api/health
+- Вход владельца: **`owner@local.test`** / **`changeme`**
 
-Проверка API: http://localhost:3000/api/health
+Для каталога, заказов, ролей и удаления аккаунта ключи Firebase / Google / 2ГИС **не нужны**. Их добавляют только для пушей, входа через Google и точного геокодера — см. разделы ниже.
 
-После правки `.env` **перезапустите** `npm run dev` — иначе новые переменные (в том числе Firebase) не подхватятся.
+После любой правки `.env` **перезапустите** `npm run dev`.
+
+Фото товаров, которые кто-то загружал у себя на диске, в git не попадают. После seed будет тестовый каталог.
+
+### Приложение
+
+Когда сайт уже крутится на порту 3000 — README [shop-mobile](https://github.com/salizhan44/shop-mobile/blob/dev/README.md), раздел **Как открыть у себя с GitHub**.
 
 ## Файл `.env`
 
@@ -182,4 +218,4 @@ npx prisma generate      # после изменения schema.prisma
 
 ## Ветки
 
-Рабочая ветка: **`dev`**. В `main` не мёржим без отдельного решения.
+Рабочая ветка: **`dev`**. В `main` не мёржим без отдельного решения. Клон без `-b dev` даёт пустой `main` — так проект не откроется.
